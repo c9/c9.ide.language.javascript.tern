@@ -38,6 +38,15 @@ handler.handlesLanguage = function(language) {
     return language === "javascript";
 };
 
+handler.getIdentifierRegex = function() {
+    // Allow slashes for package names
+    return (/[a-zA-Z_0-9\$\/]/);
+};
+
+handler.getCompletionRegex = function() {
+    return (/^[\.]$/);
+};
+
 handler.analyze = function(value, ast, callback, minimalAnalysis) {
     ternWorker.addFile(this.path, value);
     callback();
