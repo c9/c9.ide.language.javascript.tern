@@ -59,12 +59,12 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         docs: true,
         urls: true,
         caseInsensitive: false,
-    }, function(err, data) {
+    }, function(err, result) {
         if (err) {
             console.error(err);
             return callback();
         }
-        callback(data.completions.map(function(c) {
+        callback(result.completions.map(function(c) {
             var isFunction = c.type && c.type.match(/^fn\(/);
             var fullName = c.name
                 + (isFunction
@@ -84,6 +84,30 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         }));
     });
 }
+
+handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
+    ternWorker.addFile(this.path, doc.getValue());
+    this.$request({
+        type: "definition",
+        pos: pos,
+        types: true,
+        origins: true,
+        docs: true,
+        urls: true,
+        caseInsensitive: false,
+    }, function(err, result) {
+        if (err) {
+            console.error(err);
+            return callback();
+        }
+        callback({
+            path: result.file,
+            row: result.start.line,
+            column: result.start.ch,
+            icon: getIcon(result)
+        });
+    });
+};
 
 function getIcon(property) {
     var type = property.type;
@@ -142,6 +166,7 @@ handler.$request = function(query, callback) {
 
     if (query.pos)
         query.end = query.start = { line: query.pos.row, ch: query.pos.column };
+    query.lineCharPositions = true;
 
     ternWorker.request(
         {
