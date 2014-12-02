@@ -5,25 +5,31 @@ require("acorn/acorn");
 require("acorn/acorn_loose");
 require("acorn/util/walk");
 
-// TODO: move deps to node_modules? (lib/...)
+// TODO: move deps to node_modules?
 
 var tern = require("./lib/tern/lib/tern");
-require("./lib/tern/lib/signal");
-require("./lib/tern/lib/def");
-require("./lib/tern/lib/infer");
-require("./lib/tern/lib/comment");
-require("./lib/tern/plugin/angular");
-require("./lib/tern/plugin/component");
-require("./lib/tern/plugin/doc_comment");
-require("./lib/tern/plugin/node");
-require("./lib/tern/plugin/requirejs");
-
-
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
+var util = require("plugins/c9.ide.language/worker_util");
+
+var ternPlugins = {
+    angular: require("./lib/tern/plugin/angular") && true,
+    component: require("./lib/tern/plugin/component") && true,
+    doc_comment: require("./lib/tern/plugin/doc_comment") && true,
+    node: require("./lib/tern/plugin/node") && true,
+    requirejs: require("./lib/tern/plugin/requirejs") && true,
+}
+
 var ternWorker = new tern.Server({
-    getFile: function(file, c) {
-        debugger;
+    async: true,
+    plugins: ternPlugins,
+    getFile: function(file, callback) {
+        // TODO: optimize, handle file changes
+        util.readFile(file, function(err, data) {
+            if (err) return callback(err);
+
+            callback(null, data);
+        });
     }
 });
     
@@ -71,7 +77,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 priority: 4,
                 isContextual: !c.guess,
                 docHead: fullName,
-                doc: c.doc || c.type,
+                doc: (c.type ? "Type: " + c.type + "<p>" : "")
+                    + (c.doc ? c.doc.replace(/^\* /g, "") : ""),
                 isFunction: isFunction
             };
         }));
@@ -84,10 +91,10 @@ function getIcon(property) {
         return "unknown";
     }
     else if (type.match(/^fn\(/)) {
-        return property.guess ? "method" : "method2";
+        return property.guess ? "method2" : "method";
     }
     else {
-        return property.guess ? "property" : "property2";
+        return property.guess ? "property2" : "property";
     }
 }
 
