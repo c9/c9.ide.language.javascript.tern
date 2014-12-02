@@ -105,6 +105,8 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
             console.error(err);
             return callback();
         }
+        if (!result.file)
+            return callback();
         callback({
             path: result.file,
             row: result.start.line,
@@ -328,7 +330,7 @@ handler.$request = function(query, callback) {
     query.file = this.path;
 
     if (query.pos)
-        query.end = query.start = { line: query.pos.row || query.pos.sl, ch: query.pos.column || query.pos.sc };
+        query.end = query.start = { line: query.pos.row || query.pos.sl || 0, ch: query.pos.column || query.pos.sc || 0 };
     query.lineCharPositions = true;
 
     ternWorker.request(
