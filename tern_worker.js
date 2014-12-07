@@ -8,18 +8,18 @@ require("acorn/util/walk");
 
 // TODO: move deps to node_modules?
 
-var tern = require("./lib/tern/lib/tern");
+var tern = require("tern/lib/tern");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
 var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
 
 var TERN_PLUGINS = {
-    angular: require("./lib/tern/plugin/angular") && true,
-    component: require("./lib/tern/plugin/component") && true,
-    doc_comment: require("./lib/tern/plugin/doc_comment") && true,
-    node: require("./lib/tern/plugin/node") && true,
-    requirejs: require("./lib/tern/plugin/requirejs") && true,
+    angular: require("tern/plugin/angular") && true,
+    component: require("tern/plugin/component") && true,
+    doc_comment: require("tern/plugin/doc_comment") && true,
+    node: require("tern/plugin/node") && true,
+    requirejs: require("tern/plugin/requirejs") && true,
     // TODO: https://github.com/Slava/tern-meteor
 };
 
