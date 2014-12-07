@@ -20,7 +20,8 @@ var TERN_PLUGINS = {
     doc_comment: require("tern/plugin/doc_comment") && true,
     node: require("tern/plugin/node") && true,
     requirejs: require("tern/plugin/requirejs") && true,
-    // TODO: https://github.com/Slava/tern-meteor
+    // TODO: only include meteor completions if project has a .meteor folder
+    meteor: require("./lib/tern-meteor/meteor") && true,
 };
 
 var ternWorker;
