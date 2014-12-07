@@ -33,6 +33,7 @@ handler.init = function(callback) {
     ternWorker = new tern.Server({
         async: true,
         plugins: TERN_PLUGINS,
+        reuseInstances: true,
         getFile: function(file, callback) {
             // TODO: optimize, handle file changes
             util.readFile(file, function(err, data) {
