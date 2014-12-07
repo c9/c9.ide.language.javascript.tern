@@ -100,37 +100,56 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
 
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     ternWorker.addFile(this.path, doc.getValue());
-    this.$request({
+    
+    var options = {
         type: "completions",
         pos: pos,
         types: true,
         origins: true,
         docs: true,
         urls: true,
+        guess: false,
         caseInsensitive: false,
-    }, function(err, result) {
+    };
+    handler.$request(options, function(err, result) {
         if (err) {
             console.error(err);
             return callback();
         }
-        callback(result.completions.map(function(c) {
-            var isFunction = c.type && c.type.match(/^fn\(/);
-            var fullName = c.name
-                + (isFunction
-                 ? "(" + getParameterNames(c).join(", ") + ")"
-                 : "");
-            return {
-                name: fullName,
-                replaceText: c.name + (isFunction ? "(^^)" : ""),
-                icon: getIcon(c),
-                priority: 4,
-                isContextual: !c.guess,
-                docHead: fullName,
-                doc: (c.type ? "Type: " + c.type + "<p>" : "")
-                    + (c.doc ? c.doc.replace(/^\* /g, "") : ""),
-                isFunction: isFunction
-            };
-        }));
+        options.guess = true;
+        handler.$request(options, function(err, guess) {
+            if (err) {
+                console.error(err);
+                return callback();
+            }
+
+            // Only include local guesses, not wild guesses
+            // like random angular.js properties on any object
+            guess.completions.forEach(function(c) {
+                if (!c.type || c.type === "fn()?")
+                    result.completions.push(c);
+            });
+
+            callback(result.completions.map(function(c) {
+                var isFunction = c.type && c.type.match(/^fn\(/);
+                var fullName = c.name
+                    + (isFunction
+                     ? "(" + getParameterNames(c).join(", ") + ")"
+                     : "");
+                return {
+                    name: fullName,
+                    replaceText: c.name + (isFunction ? "(^^)" : ""),
+                    icon: getIcon(c),
+                    priority: 4,
+                    isContextual: !c.guess,
+                    docHead: fullName,
+                    doc: (c.type ? "Type: " + c.type + "<p>" : "")
+                        + (c.doc ? c.doc.replace(/^\* /g, "") : ""),
+                    isFunction: isFunction
+                };
+            }));
+
+        })
     });
 };
 
