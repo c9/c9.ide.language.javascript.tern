@@ -299,15 +299,16 @@ function getCallNode(currentNode, cursorPos) {
 }
 
 function getIcon(property) {
-    var type = property.type;
-    if (!type) {
+    if (property.guess)
         return "unknown";
+    if (!property.type) {
+        return "property2";
     }
-    else if (type.match(/^fn\(/)) {
-        return property.guess ? "method2" : "method";
+    else if (property.type.match(/^fn\(/)) {
+        return property.type === "fn()?" ? "method2" : "method";
     }
     else {
-        return property.guess ? "property2" : "property";
+        return "property";
     }
 }
 
