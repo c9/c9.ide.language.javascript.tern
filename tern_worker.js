@@ -30,6 +30,7 @@ var fileCache = {};
 var dirCache = {};
 var lastCacheRead = 0;
 var MAX_CACHE_AGE = 60 * 1000 * 10;
+var MAX_FILE_SIZE = 1024 * 1024;
 
 handler.init = function(callback) {
     ternWorker = new tern.Server({
@@ -38,10 +39,24 @@ handler.init = function(callback) {
         reuseInstances: true,
         getFile: function(file, callback) {
             // TODO: optimize, handle file changes
-            util.readFile(file, function(err, data) {
-                if (err) return callback(err);
-    
-                callback(null, data);
+            util.stat(file, function(err, stat) {
+                if (stat.size > MAX_FILE_SIZE) {
+                    err = new Error("File is too large to include");
+                    err.code = "ESIZE";
+                }
+
+                if (err)
+                    return callback(err);
+
+
+                fileCache[file] = fileCache[file] || {};
+                fileCache[file].mtime = stat.mtime;
+        
+                util.readFile(file, function(err, data) {
+                    if (err) return callback(err);
+
+                    callback(null, data);
+                });
             });
         }
     });
@@ -53,7 +68,6 @@ handler.init = function(callback) {
             handler.sender.emit("watchDir", { path: dir });
         
         fileCache[file] = fileCache[file] || {};
-        fileCache[file].used = Date.now();
         dirCache[dir] = dirCache[dir] || {};
         dirCache[dir].used = Date.now();
         dirCache[dir][file] = true;
