@@ -40,7 +40,7 @@ handler.init = function(callback) {
         getFile: function(file, callback) {
             // TODO: optimize, handle file changes
             util.stat(file, function(err, stat) {
-                if (stat.size > MAX_FILE_SIZE) {
+                if (stat && stat.size > MAX_FILE_SIZE) {
                     err = new Error("File is too large to include");
                     err.code = "ESIZE";
                 }
