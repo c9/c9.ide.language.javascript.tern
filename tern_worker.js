@@ -49,9 +49,8 @@ handler.init = function(callback) {
         var file = e.name;
         var dir = dirname(e.name);
         
-        if (!dirCache[dir]) {
+        if (!dirCache[dir])
             handler.sender.emit("watchDir", { path: dir });
-        }
         
         fileCache[file] = fileCache[file] || {};
         fileCache[file].used = Date.now();
@@ -60,9 +59,21 @@ handler.init = function(callback) {
         dirCache[dir][file] = true;
         lastCacheRead = Date.now();
     });
+    handler.sender.on("watchDirResult", onWatchDir);
     setInterval(garbageCollect, 60000);
     callback();
 };
+
+function onWatchDir(e) {
+    var dir = e.data.path.replace(/\/?$/, "/");
+    e.data.files.forEach(function(stat) {
+        var file = dir + stat.name;
+        if (!fileCache[file] || fileCache[file].mtime >= stat.mtime)
+            return;
+        ternWorker.delFile(file);
+        delete fileCache[file];
+    });
+}
 
 function garbageCollect() {
     var minAge = lastCacheRead - MAX_CACHE_AGE;

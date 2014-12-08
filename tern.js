@@ -16,6 +16,7 @@ define(function(require, exports, module) {
         
         var plugin = new Plugin("Ajax.org", main.consumes);
         var watched = {};
+        var worker;
         
         var loaded = false;
         function load() {
@@ -24,12 +25,14 @@ define(function(require, exports, module) {
             
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/tern_worker");
             
-            language.getWorker(function(err, worker) {
+            language.getWorker(function(err, _worker) {
                 if (err) return console.error(err);
                 
+                worker = _worker;
                 worker.on("watchDir", watchDir);
                 worker.on("unwatchDir", unwatchDir);
                 watcher.on("unwatch", onWatchRemoved);
+                watcher.on("directory", onWatchChange);
             });
         }
     
@@ -50,9 +53,13 @@ define(function(require, exports, module) {
         
         function onWatchRemoved(e) {
             // HACK: check if someone removed my watcher
-            if (watched[e.path]) {
+            if (watched[e.path])
                 watchDir(e.path);
-            }
+        }
+        
+        function onWatchChange(e) {
+            if (watched[e.path])
+                worker.emit("watchDirResult", { data: e });
         }
         
         plugin.on("load", load);
