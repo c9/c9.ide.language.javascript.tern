@@ -1,13 +1,6 @@
 define(function(require, exports, module) {
     
-// TODO: we already have a version of acorn and probably shouldn't include it twice?
-//       (let alone run it twice)
-require("acorn/acorn");
-require("acorn/acorn_loose");
-require("acorn/util/walk");
-
-// TODO: move deps to node_modules?
-
+var acornCache = require("./acorn_cache");
 var tern = require("tern/lib/tern");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
@@ -23,6 +16,7 @@ var TERN_PLUGINS = {
     // TODO: only include meteor completions if project has a .meteor folder,
     //       or if we find 1 or more meteor globals anywhere
     meteor: require("./lib/tern-meteor/meteor") && true,
+    // TODO: use https://github.com/borisyankov/DefinitelyTyped
 };
 
 var ternWorker;
@@ -60,6 +54,8 @@ handler.init = function(callback) {
             });
         }
     });
+    acornCache.init();
+    
     ternWorker.on("beforeLoad", function(e) {
         var file = e.name;
         var dir = dirname(e.name);
@@ -250,7 +246,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         caseInsensitive: false,
     }, function(err, result) {
         if (err) {
-            console.error(err);
+            console.error(err.stack);
             return callback();
         }
         if (!result.type || !result.type.match(/^fn\(/))
