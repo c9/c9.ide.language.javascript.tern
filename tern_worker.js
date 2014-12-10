@@ -354,14 +354,15 @@ function getCallNode(currentNode, cursorPos) {
 function getIcon(property) {
     if (property.guess)
         return "unknown";
-    if (!property.type) {
-        return "property2";
+    if (!property.type || property.type === "fn()?") {
+        // These were found in calls or property accesses and are uncertain
+        return property.type ? "method2" : "property2";
     }
     else if (property.type.match(/^fn\(/)) {
-        return property.type === "fn()?" ? "method2" : "method";
+        return property.doc ? "method" : "method2";
     }
     else {
-        return "property";
+        return property.doc ? "property" : "property2";
     }
 }
 
