@@ -6,6 +6,16 @@ var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
 var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
+var completeUtil = require("plugins/c9.ide.language/complete_util");
+
+// TODO: async fetch?
+var TERN_DEFS = [
+    JSON.parse(completeUtil.fetchText("lib/tern/defs/browser.json")),
+    JSON.parse(completeUtil.fetchText("lib/tern/defs/ecma5.json")),
+    JSON.parse(completeUtil.fetchText("lib/tern/defs/jquery.json")),
+    JSON.parse(completeUtil.fetchText("lib/tern/defs/underscore.json")),
+    // JSON.parse(completeUtil.fetchText("tern/defs/chai.json")),
+];
 
 var TERN_PLUGINS = {
     angular: require("tern/plugin/angular") && true,
@@ -29,6 +39,7 @@ var MAX_FILE_SIZE = 1024 * 1024;
 handler.init = function(callback) {
     ternWorker = new tern.Server({
         async: true,
+        defs: TERN_DEFS,
         plugins: TERN_PLUGINS,
         reuseInstances: true,
         getFile: function(file, callback) {
