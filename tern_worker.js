@@ -32,9 +32,24 @@ var TERN_PLUGINS = {
 var ternWorker;
 var fileCache = {};
 var dirCache = {};
+var lastAddPath;
+var lastAddValue;
 var lastCacheRead = 0;
 var MAX_CACHE_AGE = 60 * 1000 * 10;
 var MAX_FILE_SIZE = 1024 * 1024;
+    
+handler.handlesLanguage = function(language) {
+    return language === "javascript";
+};
+
+handler.getCompletionRegex = function() {
+    return (/^[\.]$/);
+};
+
+handler.getMaxFileSizeSupported = function() {
+    // .25 of current base_handler default
+    return .25 * 10 * 1000 * 80;
+};
 
 handler.init = function(callback) {
     ternWorker = new tern.Server({
@@ -93,6 +108,8 @@ function onWatchDir(e) {
             return;
         ternWorker.delFile(file);
         delete fileCache[file];
+        if (lastAddPath === file)
+            lastAddPath = null;
     });
 }
 
@@ -103,6 +120,8 @@ function garbageCollect() {
         if (fileCache[file].used < minAge) {
             ternWorker.delFile(file);
             delete fileCache[file];
+            if (lastAddPath === file)
+                lastAddPath = null;
         }
     }
     
@@ -113,27 +132,14 @@ function garbageCollect() {
         }
     }
 }
-    
-handler.handlesLanguage = function(language) {
-    return language === "javascript";
-};
-
-handler.getIdentifierRegex = function() {
-    // Allow slashes for package names
-    return (/[a-zA-Z_0-9\$\/]/);
-};
-
-handler.getCompletionRegex = function() {
-    return (/^[\.]$/);
-};
 
 handler.analyze = function(value, ast, callback, minimalAnalysis) {
-    ternWorker.addFile(this.path, value);
+    addTernFile(this.path, value);
     callback();
 };
 
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
-    ternWorker.addFile(this.path, doc.getValue());
+    addTernFile(this.path, doc.getValue());
     
     var options = {
         type: "completions",
@@ -147,13 +153,13 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     };
     handler.$request(options, function(err, result) {
         if (err) {
-            console.error(err);
+            console.error(err.stack);
             return callback();
         }
         options.guess = true;
         handler.$request(options, function(err, guess) {
             if (err) {
-                console.error(err);
+                console.error(err.stack);
                 return callback();
             }
 
@@ -188,7 +194,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
 };
 
 handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
-    ternWorker.addFile(this.path, doc.getValue());
+    addTernFile(this.path, doc.getValue());
     this.$request({
         type: "definition",
         pos: pos,
@@ -199,7 +205,7 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
         caseInsensitive: false,
     }, function(err, result) {
         if (err) {
-            console.error(err);
+            console.error(err.stack);
             return callback();
         }
         if (!result.file)
@@ -246,7 +252,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
     if (!callNode)
         return callback(); // TODO: support this case??
 
-    ternWorker.addFile(this.path, doc.getValue());
+    addTernFile(this.path, doc.getValue());
     this.$request({
         type: "type",
         pos: callNode.getPos(),
@@ -370,6 +376,14 @@ function getParameterNames(property) {
     return getSignature(property).parameters.map(function(p) {
         return p.name;
     });
+}
+
+function addTernFile(path, value) {
+    if (lastAddPath === path && lastAddValue === value)
+        return;
+    lastAddPath = path;
+    lastAddValue = value;
+    ternWorker.addFile(path, value);
 }
 
 function dirname(path) {

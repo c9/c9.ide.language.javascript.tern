@@ -54,7 +54,7 @@ define(function(require, exports, module) {
         function onWatchRemoved(e) {
             // HACK: check if someone removed my watcher
             if (watched[e.path])
-                watchDir(e.path);
+                watchDir({ data: { path: e.path } });
         }
         
         function onWatchChange(e) {
