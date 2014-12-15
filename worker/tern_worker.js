@@ -40,7 +40,9 @@ var MAX_CACHE_AGE = 60 * 1000 * 10;
 var MAX_FILE_SIZE = 200 * 1024;
     
 handler.handlesLanguage = function(language) {
-    return language === "javascript";
+    // Note that we don't really support jsx here,
+    // but rather tolerate it using error recovery...
+    return language === "javascript" || language === "jsx";
 };
 
 handler.getCompletionRegex = function() {
