@@ -23,7 +23,7 @@ define(function(require, exports, module) {
             if (loaded) return false;
             loaded = true;
             
-            language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/tern_worker");
+            language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
             
             language.getWorker(function(err, _worker) {
                 if (err) return console.error(err);
