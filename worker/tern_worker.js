@@ -25,7 +25,8 @@ var TERN_PLUGINS = {
     requirejs: require("tern/plugin/requirejs") && true,
     // TODO: only include meteor completions if project has a .meteor folder,
     //       or if we find 1 or more meteor globals anywhere
-    meteor: require("./lib/tern-meteor/meteor") && true,
+    // TODO: maybe enable this meteor plugin again?
+    // meteor: require("./lib/tern-meteor/meteor") && true,
     // TODO: use https://github.com/borisyankov/DefinitelyTyped
 };
 
@@ -36,7 +37,7 @@ var lastAddPath;
 var lastAddValue;
 var lastCacheRead = 0;
 var MAX_CACHE_AGE = 60 * 1000 * 10;
-var MAX_FILE_SIZE = 1024 * 1024;
+var MAX_FILE_SIZE = 200 * 1024;
     
 handler.handlesLanguage = function(language) {
     return language === "javascript";
@@ -56,6 +57,7 @@ handler.init = function(callback) {
         async: true,
         defs: TERN_DEFS,
         plugins: TERN_PLUGINS,
+        dependencyBudget: MAX_FILE_SIZE,
         reuseInstances: true,
         getFile: function(file, callback) {
             // TODO: optimize, handle file changes
@@ -72,7 +74,7 @@ handler.init = function(callback) {
                 fileCache[file] = fileCache[file] || {};
                 fileCache[file].mtime = stat.mtime;
         
-                util.readFile(file, function(err, data) {
+                util.readFile(file, { allowUnsaved: true }, function(err, data) {
                     if (err) return callback(err);
 
                     callback(null, data);
@@ -189,7 +191,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 };
             }));
 
-        })
+        });
     });
 };
 
@@ -456,6 +458,6 @@ handler.$request = function(query, callback) {
         },
         callback
     );
-}
+};
 
 });
