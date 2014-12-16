@@ -186,6 +186,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 var fullName = c.name
                     + (isFunction ? "(" + parameters + ")" : "");
                 return {
+                    id: c.name,
                     name: fullName,
                     replaceText: c.name + (isFunction ? "(^^)" : ""),
                     icon: getIcon(c),
@@ -440,6 +441,9 @@ function getSignature(property) {
                     parameters[parameterIndex].type += sig[i];
         }
     }
+
+    if (parameters[0].name === "")
+        parameters.shift();
 
     return {
         parameters: parameters,
