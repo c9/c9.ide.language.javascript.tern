@@ -2,8 +2,9 @@
 
 "use client";
 
-require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/complete_util"], function (architect, chai, util, complete) {
+require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/complete_util", "assert"], function (architect, chai, util, complete) {
     var expect = chai.expect;
+    var assert = require("assert");
     
     util.setStaticPrefix("/static");
     
@@ -182,7 +183,19 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                 var jsSession;
                 
                 // Setup
-                beforeEach(function(done) {
+                beforeEach(setup);
+                
+                before(function(done) {
+                    setup(function() {
+                        // Trigger intialization
+                        jsTab.editor.ace.onTextInput("m");
+                        afterCompleteOpen(function(el) {
+                            setup(done);
+                        });
+                    });
+                });
+
+                function setup(done) {
                     tabs.getTabs().forEach(function(tab) {
                         tab.close(true);
                     });
@@ -200,17 +213,10 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                             });
                         });
                     }, 500);
-                });
-                
-                it('requires at least one completion to initialize :o', function(done) {
-                    jsTab.editor.ace.onTextInput("m");
-                    afterCompleteOpen(function(el) {
-                        done();
-                    });
-                });
+                }
                 
                 it('shows an inference completer popup for a local architect module', function(done) {
-                    jsTab.editor.ace.onTextInput("m");
+                    jsTab.editor.ace.onTextInput("my");
                     afterCompleteOpen(function(el) {
                         expect.html(el).text(/myplugin/);
                         done();
@@ -243,10 +249,11 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     });
                 });
                 
-                it.skip('shows a documentation popup for modules', function(done) {
-                    jsTab.editor.ace.onTextInput("P");
+                it('shows a documentation popup for modules', function(done) {
+                    jsTab.editor.ace.onTextInput("Pl");
                     afterCompleteDocOpen(function(el) {
-                        expect.html(el).text(/stdout/);
+                        expect.html(el).text(/dummy[\s\S]*documentation/);
+                        assert(!el.textContent.match(/\*/));
                         done();
                     });
                 });

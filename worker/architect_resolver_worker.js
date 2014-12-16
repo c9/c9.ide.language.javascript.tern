@@ -5,6 +5,8 @@ var tern = require("tern/lib/tern");
 var infer = require("tern/lib/infer");
 var worker = require("plugins/c9.ide.language/worker");
 var walk = require("acorn/util/walk");
+var comment = require("tern/lib/comment");
+var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 
 var architectPlugins;
 var warnedPlugins = {};
@@ -64,7 +66,12 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                             && node.arguments[0].type === "ObjectExpression") {
                             if (provides.length !== 1)
                                 return console.warn("[architect_resolver_worker] exporting multiple client-side plugins with freezePublicAPI() not supported");
-                            ternWorker._architect.modules["_" + provides[0]] = node.arguments[0].objType;
+                            var type = node.arguments[0].objType;
+                            ternWorker._architect.modules["_" + provides[0]] = type;
+                            
+                            comment.ensureCommentsBefore(node.sourceFile.text, node);
+                            if (node.commentsBefore)
+                                type.doc = type.doc || filterDocumentation(node.commentsBefore[node.commentsBefore.length - 1]);
                         }
                     }
                 });
@@ -100,6 +107,14 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                 // Seems like our argument doesn't want to complete without a type
                 var type = new infer.Obj();
                 importsVal.addType(type);
+                
+                // HACK: tern still doesn't like our type, so let's override this
+                importsVal.gatherProperties = function(f) {
+                    // for (var p in this.props) f(p, this, 0);
+                    consumes.forEach(function(m) {
+                        return f(m, importsVal, 0);
+                    });
+                };
 
                 if (!consumes)
                     return console.warn("[architect_resolver_worker] main.consumes not defined");

@@ -177,20 +177,22 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
 
             callback(result.completions.map(function(c) {
                 var isFunction = c.type && c.type.match(/^fn\(/)
+                var isAnonymous = c.type && c.type.match(/^{/);
                 var parameters = isFunction && getSignature(c).parameters.map(function(p) {
                     return p.name + (p.type !== "?" ? " : " + p.type : "");
                 }).join(", ");
+                var doc = (c.type && !isFunction && !isAnonymous ? "Type: " + c.type + "<p>" : "")
+                        + (c.doc ? c.doc.replace(/^\* /g, "") : "");
                 var fullName = c.name
                     + (isFunction ? "(" + parameters + ")" : "");
                 return {
                     name: fullName,
                     replaceText: c.name + (isFunction ? "(^^)" : ""),
                     icon: getIcon(c),
-                    priority: 4,
+                    priority: 5,
                     isContextual: !c.guess,
-                    docHead: fullName,
-                    doc: (c.type && !isFunction ? "Type: " + type + "<p>" : "")
-                        + (c.doc ? c.doc.replace(/^\* /g, "") : ""),
+                    docHead: doc && fullName,
+                    doc: doc,
                     isFunction: isFunction
                 };
             }));
