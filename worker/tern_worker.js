@@ -23,6 +23,7 @@ var TERN_PLUGINS = {
     doc_comment: require("tern/plugin/doc_comment") && true,
     node: require("tern/plugin/node") && true,
     requirejs: require("tern/plugin/requirejs") && true,
+    architect_resolver: require("./architect_resolver_worker") && true,
     // TODO: only include meteor completions if project has a .meteor folder,
     //       or if we find 1 or more meteor globals anywhere
     // TODO: maybe enable this meteor plugin again?
@@ -369,10 +370,10 @@ function getIcon(property) {
         return property.type ? "method2" : "property2";
     }
     else if (property.type.match(/^fn\(/)) {
-        return property.doc ? "method" : "method2";
+        return "method"; // property.doc ? "method" : "method2";
     }
     else {
-        return property.doc ? "property" : "property2";
+        return "property"; // property.doc ? "property" : "property2";
     }
 }
 
