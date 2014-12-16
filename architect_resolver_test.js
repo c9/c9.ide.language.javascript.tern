@@ -225,15 +225,6 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     });
                 });
                 
-                it('shows an completer popup for a non-local architect function', function(done) {
-                    jsTab.editor.ace.onTextInput("Plugin");
-                    jsTab.editor.ace.onTextInput(".");
-                    afterCompleteOpen(function(el) {
-                        expect.html(el).text(/bogus/);
-                        done();
-                    });
-                });
-                
                 it('shows a documentation popup for non-local architect functions', function(done) {
                     jsTab.editor.ace.onTextInput("Plugin");
                     jsTab.editor.ace.onTextInput(".");
@@ -243,7 +234,16 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     });
                 });
                 
-                it.skip('shows a documentation popup in completion', function(done) {
+                it('shows types for a non-local architect function', function(done) {
+                    jsTab.editor.ace.onTextInput("Plugin");
+                    jsTab.editor.ace.onTextInput(".");
+                    afterCompleteDocOpen(function(el) {
+                        expect.html(el).text(/s : string/);
+                        done();
+                    });
+                });
+                
+                it.skip('shows a documentation popup for modules', function(done) {
                     jsTab.editor.ace.onTextInput("P");
                     afterCompleteDocOpen(function(el) {
                         expect.html(el).text(/stdout/);

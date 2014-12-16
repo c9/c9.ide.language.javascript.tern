@@ -176,11 +176,12 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             });
 
             callback(result.completions.map(function(c) {
-                var isFunction = c.type && c.type.match(/^fn\(/);
+                var isFunction = c.type && c.type.match(/^fn\(/)
+                var parameters = isFunction && getSignature(c).parameters.map(function(p) {
+                    return p.name + (p.type !== "?" ? " : " + p.type : "");
+                }).join(", ");
                 var fullName = c.name
-                    + (isFunction
-                     ? "(" + getParameterNames(c).join(", ") + ")"
-                     : "");
+                    + (isFunction ? "(" + parameters + ")" : "");
                 return {
                     name: fullName,
                     replaceText: c.name + (isFunction ? "(^^)" : ""),
@@ -188,7 +189,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                     priority: 4,
                     isContextual: !c.guess,
                     docHead: fullName,
-                    doc: (c.type ? "Type: " + c.type + "<p>" : "")
+                    doc: (c.type && !isFunction ? "Type: " + type + "<p>" : "")
                         + (c.doc ? c.doc.replace(/^\* /g, "") : ""),
                     isFunction: isFunction
                 };
@@ -377,12 +378,6 @@ function getIcon(property) {
     }
 }
 
-function getParameterNames(property) {
-    return getSignature(property).parameters.map(function(p) {
-        return p.name;
-    });
-}
-
 function addTernFile(path, value) {
     if (lastAddPath === path && lastAddValue === value)
         return;
@@ -400,6 +395,8 @@ function dirname(path) {
  * (Would have been useful if tern exposed type objects, but this works.)
  */
 function getSignature(property) {
+    if (!property.type || !property.type.match(/^fn\(/))
+        return { parameters: [] };
     var sig = property.type;
     var parameters = [{ name: "", type: "" }];
     var parameterIndex = 0;
