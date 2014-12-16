@@ -11,8 +11,8 @@ var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/cta
 var architectPlugins;
 var warnedPlugins = {};
 
-
-worker.sender.on("architectPlugins", function(e) {
+worker.sender.emit("architectPlugins");
+worker.sender.on("architectPluginsResult", function(e) {
     architectPlugins = e.data;
 });
 
@@ -83,6 +83,8 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
     function onPostInfer(ast, scope) {
         var path = worker.$lastWorker.$path;
         var baseDirMatch = path.match(/(.*\/)plugins\//);
+        if (!architectPlugins)
+            console.error("[architect_resolver_worker] architectPlugins not available");
 
         var consumes;
         walk.simple(ast, {
@@ -145,7 +147,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
         });
 
         function getPath(name) {
-            var result = architectPlugins && architectPlugins["_" + name];
+            var result = architectPlugins["_" + name];
             if (!result)
                 return;
             return baseDirMatch[1] + result + ".js";

@@ -44,7 +44,9 @@ define(function(require, exports, module) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 
-                worker.emit("architectPlugins", { data: knownPlugins });
+                worker.on("architectPlugins", function() {
+                    worker.emit("architectPluginsResult", { data: knownPlugins });
+                });
             });
         }
         
