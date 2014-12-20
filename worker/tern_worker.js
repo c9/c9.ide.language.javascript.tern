@@ -174,7 +174,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         origins: true,
         docs: true,
         urls: true,
-        guess: false,
+        guess: true,
         caseInsensitive: false,
     };
     handler.$request(options, function(err, result) {
@@ -182,44 +182,33 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             console.error(err.stack);
             return callback();
         }
-        options.guess = true;
-        handler.$request(options, function(err, guess) {
-            if (err) {
-                console.error(err.stack);
-                return callback();
-            }
 
-            // Only include local guesses, not wild guesses
-            // like random angular.js properties on any object
-            guess.completions.forEach(function(c) {
-                if (!c.type || c.type === "fn()?")
-                    result.completions.push(c);
-            });
-
-            callback(result.completions.map(function(c) {
-                var isFunction = c.type && c.type.match(/^fn\(/)
-                var isAnonymous = c.type && c.type.match(/^{/);
-                var parameters = isFunction && getSignature(c).parameters.map(function(p) {
-                    return p.name + (p.type !== "?" ? " : " + p.type : "");
-                }).join(", ");
-                var doc = (c.type && !isFunction && !isAnonymous ? "Type: " + c.type + "<p>" : "")
-                        + (c.doc ? c.doc.replace(/^\* /g, "") : "");
-                var fullName = c.name
-                    + (isFunction ? "(" + parameters + ")" : "");
-                return {
-                    id: c.name,
-                    name: fullName,
-                    replaceText: c.name + (isFunction ? "(^^)" : ""),
-                    icon: getIcon(c),
-                    priority: 5,
-                    isContextual: !c.guess,
-                    docHead: doc && fullName,
-                    doc: doc,
-                    isFunction: isFunction
-                };
-            }));
-
-        });
+        callback(result.completions.map(function(c) {
+            // Avoid random suggestions like angular.js properties on any object
+            // if (c.guess && c.type && c.type !== "fn()?)")
+            //    return;
+            
+            var isFunction = c.type && c.type.match(/^fn\(/)
+            var isAnonymous = c.type && c.type.match(/^{/);
+            var parameters = isFunction && getSignature(c).parameters.map(function(p) {
+                return p.name + (p.type && p.type !== "?" ? " : " + p.type : "");
+            }).join(", ");
+            var doc = (c.type && !isFunction && !isAnonymous && c.type !== "?" ? "Type: " + c.type + "<p>" : "")
+                    + (c.doc ? filterDocumentation(c.doc) : "");
+            var fullName = c.name
+                + (isFunction ? "(" + parameters + ")" : "");
+            return {
+                id: c.name,
+                name: fullName,
+                replaceText: c.name + (isFunction ? "(^^)" : ""),
+                icon: getIcon(c),
+                priority: 5,
+                isContextual: !c.guess,
+                docHead: doc && fullName,
+                doc: doc,
+                isFunction: isFunction
+            };
+        }));
     });
 };
 
@@ -388,9 +377,7 @@ function getCallNode(currentNode, cursorPos) {
 }
 
 function getIcon(property) {
-    if (property.guess)
-        return "unknown";
-    if (!property.type || property.type === "fn()?") {
+    if (property.guess || !property.type || property.type === "fn()?") {
         // These were found in calls or property accesses and are uncertain
         return property.type ? "method2" : "property2";
     }
