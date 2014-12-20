@@ -82,6 +82,7 @@ handler.init = function(callback) {
                 util.readFile(file, { allowUnsaved: true }, function(err, data) {
                     if (err) return callback(err);
 
+                    lastAddPath = null; // invalidate cache
                     callback(null, data);
                 });
             });
@@ -141,7 +142,25 @@ function garbageCollect() {
 }
 
 handler.analyze = function(value, ast, callback, minimalAnalysis) {
+    if (fileCache[this.path])
+        return callback();
+
+    // Pre-analyze  the first time we see a file, loading any imports
+    fileCache[this.path] = {
+        mtime: 0, // prefer reloading since we may be unsaved
+        used: Date.now()
+    };
     addTernFile(this.path, value);
+
+    if (architectResolver.ready) {
+        ternWorker.flush();
+    }
+    else {
+        handler.sender.once("architectPluginsResult", function() {
+            setTimeout(ternWorker.flush.bind(ternWorker));
+        });
+    }
+
     callback();
 };
 

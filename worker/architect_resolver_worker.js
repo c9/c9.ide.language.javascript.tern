@@ -13,6 +13,7 @@ var warnedPlugins = {};
 worker.sender.emit("architectPlugins");
 worker.sender.on("architectPluginsResult", function(e) {
     architectPlugins = e.data;
+    this.ready = true;
 });
 
 tern.registerPlugin("architect_resolver", function(ternWorker, options) {
@@ -84,7 +85,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
         var path = worker.$lastWorker.$path;
         var baseDirMatch = path.match(/(.*\/)plugins\//);
         if (!architectPlugins)
-            console.error("[architect_resolver_worker] architectPlugins not available");
+            return console.error("[architect_resolver_worker] architectPlugins not available");
 
         var consumes;
         walk.simple(ast, {
