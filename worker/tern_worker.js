@@ -116,8 +116,7 @@ function onWatchDir(e) {
             return;
         ternWorker.delFile(file);
         delete fileCache[file];
-        if (lastAddPath === file)
-            lastAddPath = null;
+        lastAddPath = null; // invalidate local file cache
     });
 }
 
