@@ -45,6 +45,8 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                     || node.params[1].name !== "imports"
                     || node.params[2].name !== "register")
                     return;
+                
+                var seen = {};
 
                 walk.simple(node, {
                     CallExpression: function(node) {
@@ -55,7 +57,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                             arg.properties.forEach(function(prop) {
                                 var name = prop.key.name;
                                 var value = arg.objType.props[name] && arg.objType.props[name].types && arg.objType.props[name].types[0];
-                                if (!value)
+                                if (!value || seen["_" + name])
                                     return;
                                 ternWorker._architect.modules["_" + name] = value;
                             });
@@ -64,10 +66,13 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                             && node.callee.property.name === "freezePublicAPI"
                             && node.arguments.length >= 1
                             && node.arguments[0].type === "ObjectExpression") {
-                            if (provides.length !== 1)
-                                return console.warn("[architect_resolver_worker] exporting multiple client-side plugins with freezePublicAPI() not supported");
+                            var name = provides[0];
+                            if (provides.length !== 1
+                                && !(provides.length === 2 && name === "ext" && !seen["_" + name]))
+                                return console.warn("[architect_resolver_worker] exporting multiple client-side plugins with freezePublicAPI() not supported: " + node.sourceFile.name);
                             var type = node.arguments[0].objType;
-                            ternWorker._architect.modules["_" + provides[0]] = type;
+                            ternWorker._architect.modules["_" + name] = type;
+                            seen["_" + name] = true;
                             delete type.props._events;
                             
                             comment.ensureCommentsBefore(node.sourceFile.text, node);

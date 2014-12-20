@@ -153,15 +153,13 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     addTernFile(this.path, value);
 
     if (architectResolver.ready) {
-        ternWorker.flush();
+        ternWorker.flush(callback);
     }
     else {
         handler.sender.once("architectPluginsResult", function() {
-            setTimeout(ternWorker.flush.bind(ternWorker));
+            setTimeout(ternWorker.flush.bind(ternWorker, callback));
         });
     }
-
-    callback();
 };
 
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
