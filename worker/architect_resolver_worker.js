@@ -6,7 +6,6 @@ var infer = require("tern/lib/infer");
 var worker = require("plugins/c9.ide.language/worker");
 var walk = require("acorn/util/walk");
 var comment = require("tern/lib/comment");
-var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 
 var architectPlugins;
 var warnedPlugins = {};
@@ -53,7 +52,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                             && node.arguments[1].type === "ObjectExpression") {
                             var arg = node.arguments[1];
                             arg.properties.forEach(function(prop) {
-                                var name = prop.key.value;
+                                var name = prop.key.name;
                                 var value = arg.objType.props[name] && arg.objType.props[name].types && arg.objType.props[name].types[0];
                                 if (!value)
                                     return;
@@ -68,10 +67,11 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                                 return console.warn("[architect_resolver_worker] exporting multiple client-side plugins with freezePublicAPI() not supported");
                             var type = node.arguments[0].objType;
                             ternWorker._architect.modules["_" + provides[0]] = type;
+                            delete type.props._events;
                             
                             comment.ensureCommentsBefore(node.sourceFile.text, node);
                             if (node.commentsBefore)
-                                type.doc = type.doc || filterDocumentation(node.commentsBefore[node.commentsBefore.length - 1]);
+                                type.doc = type.doc || node.commentsBefore[node.commentsBefore.length - 1];
                         }
                     }
                 });

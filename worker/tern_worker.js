@@ -7,6 +7,8 @@ var handler = module.exports = Object.create(baseLanguageHandler);
 var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
 var completeUtil = require("plugins/c9.ide.language/complete_util");
+var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
+var architectResolver = require("./architect_resolver_worker");
 
 // TODO: async fetch?
 var TERN_DEFS = [
@@ -23,7 +25,7 @@ var TERN_PLUGINS = {
     doc_comment: require("tern/plugin/doc_comment") && true,
     node: require("tern/plugin/node") && true,
     requirejs: require("tern/plugin/requirejs") && true,
-    architect_resolver: require("./architect_resolver_worker") && true,
+    architect_resolver: architectResolver && true,
     // TODO: only include meteor completions if project has a .meteor folder,
     //       or if we find 1 or more meteor globals anywhere
     // TODO: maybe enable this meteor plugin again?
@@ -437,7 +439,7 @@ function getSignature(property) {
                     returnType += sig[i];
                 else if (!depth && !inType)
                     parameters[parameterIndex].name += sig[i];
-                else if (inType)
+                else if (!depth && inType)
                     parameters[parameterIndex].type += sig[i];
         }
     }

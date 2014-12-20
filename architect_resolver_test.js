@@ -240,6 +240,15 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     });
                 });
                 
+                it('shows a completion indirect import references', function(done) {
+                    jsTab.editor.ace.onTextInput("Plugin;\nPlugin");
+                    jsTab.editor.ace.onTextInput(".");
+                    afterCompleteDocOpen(function(el) {
+                        expect.html(el).text(/so bogus/);
+                        done();
+                    });
+                });
+                
                 it('shows types for a non-local architect function', function(done) {
                     jsTab.editor.ace.onTextInput("Plugin");
                     jsTab.editor.ace.onTextInput(".");
