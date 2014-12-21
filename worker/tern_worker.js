@@ -284,7 +284,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
     addTernFile(this.path, doc.getValue());
     this.$request({
         type: "type",
-        pos: callNode.getPos(),
+        pos: { row: callNode[0].getPos().el, column: callNode[0].getPos().ec },
         types: true,
         origins: true,
         docs: true,
@@ -474,7 +474,10 @@ handler.$request = function(query, callback) {
     query.file = this.path;
 
     if (query.pos)
-        query.end = query.start = { line: query.pos.row || query.pos.sl || 0, ch: query.pos.column || query.pos.sc || 0 };
+        query.end = query.start = {
+            line: query.pos.row || query.pos.sl || 0,
+            ch: query.pos.column || query.pos.sc || 0
+        };
     query.lineCharPositions = true;
 
     ternWorker.request(
