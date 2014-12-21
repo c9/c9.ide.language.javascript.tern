@@ -248,6 +248,66 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
     });
 };
 
+/* UNDONE: getRenamePositions(); doesn't appear to properly handle local references
+   e.g. var foo = child_process.exec(); foo(); -> foo can't be renamed
+handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) {
+    addTernFile(this.path, doc.getValue());
+    this.$request({
+        type: "definition",
+        pos: pos,
+        types: true,
+        origins: true,
+        docs: true,
+        urls: true,
+        caseInsensitive: false,
+    }, function(err, def) {
+        if (err) {
+            console.error(err.stack);
+            return callback();
+        }
+        if (handler.path !== def.file) {
+            console.error("Multi-file rename not supported");
+            return callback();
+        }
+
+        handler.$request({
+            type: "refs",
+            pos: pos,
+            types: true,
+            origins: true,
+            docs: true,
+            urls: true,
+            caseInsensitive: false,
+        }, function(err, refs) {
+            if (err) {
+                console.error(err.stack);
+                return callback();
+            }
+
+            var allIds = [def].concat(refs.refs);
+            var selected = allIds.filter(function(id) {
+                return pos.row === id.start.line
+                    && id.start.ch <= pos.column && pos.column < id.end.ch;
+            });
+            if (!selected.length) {
+                console.error("Could not find selected identifier");
+                return callback();
+            }
+
+            callback({
+                length: def.end.ch - def.start.ch,
+                pos: { row: selected[0].start.line, column: selected[0].start.ch },
+                others: allIds.filter(function(ref) {
+                    return ref.file === handler.path;
+                }).map(function(ref) {
+                    return { row: ref.start.line, column: ref.start.ch };
+                }),
+            });
+        });
+    });
+};
+*/
+
 handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
     if (!currentNode)
         return callback();
