@@ -97,7 +97,7 @@ handler.init = function(callback) {
         var dir = dirname(e.name);
         
         if (!dirCache[dir])
-            handler.sender.emit("watchDir", { path: dir });
+            util.$watchDir(dir, handler);
         
         fileCache[file] = fileCache[file] || {};
         dirCache[dir] = dirCache[dir] || {};
@@ -105,12 +105,12 @@ handler.init = function(callback) {
         dirCache[dir][file] = true;
         lastCacheRead = Date.now();
     });
-    handler.sender.on("watchDirResult", onWatchDir);
+    util.$onWatchDirChange(onWatchDirChange);
     setInterval(garbageCollect, 60000);
     callback();
 };
 
-function onWatchDir(e) {
+function onWatchDirChange(e) {
     var dir = e.data.path.replace(/\/?$/, "/");
     e.data.files.forEach(function(stat) {
         var file = dir + stat.name;
