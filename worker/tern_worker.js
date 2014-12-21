@@ -355,7 +355,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
             console.error(err.stack);
             return callback();
         }
-        if (!result.type || !result.type.match(/^fn\(/))
+        if (!result.type || !result.name || !result.type.match(/^fn\(/))
             return callback();
 
         var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : currentNode;
