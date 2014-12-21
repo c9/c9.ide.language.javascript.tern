@@ -9,6 +9,7 @@ var util = require("plugins/c9.ide.language/worker_util");
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 var architectResolver = require("./architect_resolver_worker");
+var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_completer");
 
 // TODO: async fetch?
 var TERN_DEFS = [
@@ -89,6 +90,7 @@ handler.init = function(callback) {
         }
     });
     acornCache.init();
+    inferCompleter.setExtraModules(ternWorker.cx.definitions.node);
     
     ternWorker.on("beforeLoad", function(e) {
         var file = e.name;
@@ -182,9 +184,18 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
 
         callback(result.completions.map(function(c) {
             // Avoid random suggestions like angular.js properties on any object
-            // if (c.guess && c.type && c.type !== "fn()?)")
-            //    return;
-            
+            if (c.guess && c.type && c.type !== "fn()?)")
+               return;
+            var icon = getIcon(c);
+
+            // Clean up messy node completions
+            if (c.name[0] === '"') {
+                if (c.origin !== "node")
+                    return;
+                c.name = c.name.replace(/"(.*)"/, "$1");
+                icon = "package";
+            }
+                        
             var isFunction = c.type && c.type.match(/^fn\(/)
             var isAnonymous = c.type && c.type.match(/^{/);
             var parameters = isFunction && getSignature(c).parameters.map(function(p) {
@@ -198,13 +209,15 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 id: c.name,
                 name: fullName,
                 replaceText: c.name + (isFunction ? "(^^)" : ""),
-                icon: getIcon(c),
+                icon: icon,
                 priority: 5,
                 isContextual: !c.guess,
                 docHead: doc && fullName,
-                doc: doc,
+                doc: (c.origin ? "Origin: " + c.origin + "<p>" : "") + doc,
                 isFunction: isFunction
             };
+        }).filter(function(c) {
+            return c;
         }));
     });
 };
@@ -287,7 +300,8 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
 
         var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : currentNode;
         var signature = getSignature(result);
-        signature.parameters[argIndex].active = true;
+        if (signature.parameters[argIndex])
+            signature.parameters[argIndex].active = true;
 
         callback({
             hint: {
