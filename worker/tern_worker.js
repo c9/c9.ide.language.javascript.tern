@@ -195,6 +195,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 c.name = c.name.replace(/"(.*)"/, "$1");
                 icon = "package";
             }
+
+            var isContextual = currentNode.cons === "PropAccess" && !c.guess;
                         
             var isFunction = c.type && c.type.match(/^fn\(/)
             var isAnonymous = c.type && c.type.match(/^{/);
@@ -211,7 +213,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 replaceText: c.name + (isFunction ? "(^^)" : ""),
                 icon: icon,
                 priority: 5,
-                isContextual: !c.guess,
+                isContextual: isContextual,
                 docHead: doc && fullName,
                 doc: (c.origin ? "Origin: " + c.origin + "<p>" : "") + doc,
                 isFunction: isFunction
