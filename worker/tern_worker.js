@@ -363,6 +363,13 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (signature.parameters[argIndex])
             signature.parameters[argIndex].active = true;
 
+        signature.parameters.forEach(function(p) {
+            if (p.type === "?")
+                delete p.type;
+        });
+        if (signature.returnType === "?")
+            delete signature.returnType;
+
         callback({
             hint: {
                 signatures: [{
