@@ -162,17 +162,12 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     };
     addTernFile(this.path, value);
 
-    if (architectResolver.ready) {
-        ternWorker.flush(callback);
-    }
-    else {
-        handler.sender.once("architectPluginsResult", function() {
-            setTimeout(handler.$flush.bind(handler, function(err) {
-                if (err) console.error(err.stack || err);
-                callback();
-            }));
+    architectResolver.onReady(function() {
+        handler.$flush(function(err) {
+            if (err) console.error(err.stack || err);
+            callback();
         });
-    }
+    });
 };
 
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
@@ -583,7 +578,7 @@ handler.$request = function(query, callback) {
 
 handler.$flush = function(callback) {
     try {
-        ternWorker.flush(ternWorker, done);
+        ternWorker.flush(done);
     }
     catch (err) {
         if (isDone) throw err;
