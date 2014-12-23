@@ -66,7 +66,8 @@ handler.init = function(callback) {
         dependencyBudget: MAX_FILE_SIZE,
         reuseInstances: true,
         getFile: function(file, callback) {
-            // TODO: optimize, handle file changes
+            if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
+                file += ".js";
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
                     err = new Error("File is too large to include");

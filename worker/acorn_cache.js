@@ -18,7 +18,7 @@ module.exports.init = function() {
         if (input === lastInputLoose)
             return lastOutputLoose;
         
-        lastOutput = parse(input, options);
+        lastOutput = filterDefine(parse(input, options));
         lastInput = input;
         return lastOutput;
     };
@@ -27,10 +27,29 @@ module.exports.init = function() {
         if (input === lastInputLoose)
             return lastOutputLoose;
         
-        lastOutputLoose = parse_dammit(input, options);
+        lastOutputLoose = filterDefine(parse_dammit(input, options));
         lastInputLoose = input;
         return lastOutputLoose;
     };
+
+    function filterDefine(ast) {
+        // HACK: replace 'define(function(require, exports, module)' with
+        //               'define(function()' to fix exported symbols
+        ast.body.forEach(function(statement) {
+            // define(function(...) {})
+            if (statement.type === "ExpressionStatement"
+                && statement.expression.type === "CallExpression"
+                && statement.expression.callee.name === "define"
+                && statement.expression.arguments.length
+                && statement.expression.arguments[0].type === "FunctionExpression") {
+                var func = statement.expression.arguments[0];
+                func.params = func.params.filter(function(p) {
+                    return ["require", "exports", "module"].indexOf(p.name) === -1;
+                });
+            }
+        });
+        return ast;
+    }
 };
 
 });
