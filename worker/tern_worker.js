@@ -175,6 +175,9 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     addTernFile(this.path, doc.getValue());
     
+    var line = doc.getLine(pos.row);
+    var prefix = util.getPrecedingIdentifier(line, pos.column);
+
     var options = {
         type: "completions",
         pos: pos,
@@ -197,6 +200,10 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                return;
 
             var isContextual = currentNode && currentNode.cons === "PropAccess" && !c.guess;
+
+            if (!isContextual && c.origin === "browser" && prefix.length < 3)
+                return; // skip completions like onchange (from window.onchange)
+
             var isFromLibrary = c.origin && c.origin[0] !== "/";
             var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
             var icon = getIcon(c, priority);
