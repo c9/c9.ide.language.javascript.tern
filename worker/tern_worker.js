@@ -73,21 +73,29 @@ handler.init = function(callback) {
                     err = new Error("File is too large to include");
                     err.code = "ESIZE";
                 }
-
+                
                 if (err)
-                    return callback(err);
-
+                    return done(err);
 
                 fileCache[file] = fileCache[file] || {};
                 fileCache[file].mtime = stat.mtime;
         
                 util.readFile(file, { allowUnsaved: true }, function(err, data) {
-                    if (err) return callback(err);
+                    if (err) return done(err);
 
                     lastAddPath = null; // invalidate cache
-                    callback(null, data);
+                    done(null, data);
                 });
             });
+
+            function done(err, result) {
+                try {
+                    callback(err, result);
+                }
+                catch (err) {
+                    console.error(err.stack);
+                }
+            }
         }
     });
     acornCache.init();
@@ -159,7 +167,10 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     }
     else {
         handler.sender.once("architectPluginsResult", function() {
-            setTimeout(ternWorker.flush.bind(ternWorker, callback));
+            setTimeout(handler.$flush.bind(handler, function(err) {
+                if (err) console.error(err.stack || err);
+                callback();
+            }));
         });
     }
 };
@@ -179,7 +190,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     };
     handler.$request(options, function(err, result) {
         if (err) {
-            console.error(err.stack);
+            console.error(err.stack || err);
             return callback();
         }
 
@@ -237,7 +248,7 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
         caseInsensitive: false,
     }, function(err, result) {
         if (err) {
-            console.error(err.stack);
+            console.error(err.stack || err);
             return callback();
         }
         if (!result.file)
@@ -265,7 +276,7 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
         caseInsensitive: false,
     }, function(err, def) {
         if (err) {
-            console.error(err.stack);
+            console.error(err.stack || err);
             return callback();
         }
         if (handler.path !== def.file) {
@@ -283,7 +294,7 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
             caseInsensitive: false,
         }, function(err, refs) {
             if (err) {
-                console.error(err.stack);
+                console.error(err.stack || err);
                 return callback();
             }
 
@@ -355,7 +366,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         caseInsensitive: false,
     }, function(err, result) {
         if (err) {
-            console.error(err.stack);
+            console.error(err.stack || err);
             return callback();
         }
         if (!result.type || !result.name || !result.type.match(/^fn\(/))
@@ -550,12 +561,40 @@ handler.$request = function(query, callback) {
         };
     query.lineCharPositions = true;
 
-    ternWorker.request(
-        {
-            query: query,
-        },
-        callback
-    );
+    try {
+        ternWorker.request(
+            {
+                query: query,
+            },
+            done
+        );
+    }
+    catch (err) {
+        if (isDone) throw err;
+        return done(err);
+    }
+
+    var isDone;
+    function done(err, result) {
+        isDone = true;
+        callback(err, result);
+    }
 };
+
+handler.$flush = function(callback) {
+    try {
+        ternWorker.flush(ternWorker, done);
+    }
+    catch (err) {
+        if (isDone) throw err;
+        return done(err);
+    }
+
+    var isDone;
+    function done(err, result) {
+        isDone = true;
+        callback(err, result);
+    }
+}
 
 });
