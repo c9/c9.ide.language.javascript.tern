@@ -42,6 +42,8 @@ var lastAddValue;
 var lastCacheRead = 0;
 var MAX_CACHE_AGE = 60 * 1000 * 10;
 var MAX_FILE_SIZE = 200 * 1024;
+var PRIORITY_DEFAULT = 5;
+var PRIORITY_LIBRARY_GLOBAL = 0;
     
 handler.handlesLanguage = function(language) {
     // Note that we don't really support jsx here,
@@ -193,7 +195,11 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             // Avoid random suggestions like angular.js properties on any object
             if (c.guess && c.type && c.type !== "fn()?)")
                return;
-            var icon = getIcon(c);
+
+            var isContextual = currentNode && currentNode.cons === "PropAccess" && !c.guess;
+            var isFromLibrary = c.origin && c.origin[0] !== "/";
+            var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
+            var icon = getIcon(c, priority);
 
             // Clean up messy node completions
             if (c.name[0] === '"') {
@@ -202,8 +208,6 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 c.name = c.name.replace(/"(.*)"/, "$1");
                 icon = "package";
             }
-
-            var isContextual = currentNode.cons === "PropAccess" && !c.guess;
                         
             var isFunction = c.type && c.type.match(/^fn\(/)
             var isAnonymous = c.type && c.type.match(/^{/);
@@ -219,7 +223,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 name: fullName,
                 replaceText: c.name + (isFunction ? "(^^)" : ""),
                 icon: icon,
-                priority: 5,
+                priority: priority,
                 isContextual: isContextual,
                 docHead: doc && fullName,
                 doc: (c.origin ? "Origin: " + c.origin + "<p>" : "") + doc,
@@ -252,7 +256,7 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
             path: result.file,
             row: result.start.line,
             column: result.start.ch,
-            icon: getIcon(result)
+            icon: getIcon(result, PRIORITY_DEFAULT)
         });
     });
 };
@@ -463,16 +467,16 @@ function getCallNode(currentNode, cursorPos) {
     return result;
 }
 
-function getIcon(property) {
+function getIcon(property, priority) {
     if (property.guess || !property.type || property.type === "fn()?") {
         // These were found in calls or property accesses and are uncertain
         return property.type ? "method2" : "property2";
     }
     else if (property.type.match(/^fn\(/)) {
-        return "method"; // property.doc ? "method" : "method2";
+        return priority ? "method" : "method2";
     }
     else {
-        return "property"; // property.doc ? "property" : "property2";
+        return priority ? "property" : "property2";
     }
 }
 
