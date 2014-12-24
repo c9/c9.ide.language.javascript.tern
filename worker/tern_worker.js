@@ -100,7 +100,6 @@ handler.init = function(callback) {
             }
         }
     });
-    acornCache.init();
     inferCompleter.setExtraModules(ternWorker.cx.definitions.node);
     
     ternWorker.on("beforeLoad", function(e) {

@@ -1,17 +1,19 @@
-
-define(function(require, exports, module) {
-
-var tern = require("tern/lib/tern");
-var infer = require("tern/lib/infer");
-var walk = require("acorn/util/walk");
-var comment = require("tern/lib/comment");
+/*global tern*/
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    return mod(require("../lib/infer"), require("../lib/tern"), require("../lib/comment"), require("acorn/util/walk"), require);
+  if (typeof define == "function" && define.amd) // AMD
+    return define(["tern/lib/infer", "tern/lib/tern", "tern/lib/comment", "acorn/util/walk"], mod);
+  mod(tern, tern);
+})(function(infer, tern, comment, walk, require, exports) {
 
 var architectPlugins;
 var warnedPlugins = {};
 
-module.exports.setArchitectPlugins = function(value) {
-    architectPlugins = value;
-};
+if (exports)
+    exports.setArchitectPlugins = function(value) {
+        architectPlugins = value;
+    };
 
 tern.registerPlugin("architect_resolver", function(ternWorker, options) {
     ternWorker._architect = {
