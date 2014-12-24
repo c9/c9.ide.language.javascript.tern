@@ -238,8 +238,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 icon: icon,
                 priority: priority,
                 isContextual: isContextual,
-                docHead: doc && fullName,
-                doc: (c.origin ? "Origin: " + c.origin + "<p>" : "") + doc,
+                docHead: fullName,
+                doc: (c.origin && isFromLibrary ? "Origin: " + c.origin + "<p>" : "") + doc,
                 isFunction: isFunction
             };
         }).filter(function(c) {
