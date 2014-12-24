@@ -173,6 +173,12 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
 };
 
 handler.complete = function(doc, fullAst, pos, currentNode, callback) {
+    // Don't show completions for definitions
+    if (!currentNode ||
+        ["FArg", "Function", "Arrow", "VarDecl", "VarDeclInit", "ConstDecl", "ConstDeclInit",
+        "LetDecl", "LetDeclInit", "PropertyInit", "Label"].indexOf(currentNode.cons) > -1)
+        return callback();
+
     addTernFile(this.path, doc.getValue());
     
     var line = doc.getLine(pos.row);
@@ -199,7 +205,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             if (c.guess && c.type && c.type !== "fn()?)")
                return;
 
-            var isContextual = currentNode && currentNode.cons === "PropAccess" && !c.guess;
+            var isContextual = currentNode.cons === "PropAccess" && !c.guess;
 
             if (!isContextual && c.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
