@@ -559,7 +559,8 @@ function getSignature(property) {
                 inReturn = true;
                 break;
             case "?":
-                parameters[parameterIndex].name = "[" + parameters[parameterIndex].name + "]";
+                if (!depth && inType)
+                    parameters[parameterIndex].name = "[" + parameters[parameterIndex].name + "]";
                 break;
             default:
                 if (inReturn)
