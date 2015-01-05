@@ -199,46 +199,61 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             return callback();
         }
 
-        callback(result.completions.map(function(c) {
+        callback(result.completions.map(function(match) {
             // Avoid random suggestions like angular.js properties on any object
-            if (c.guess && c.type && c.type !== "fn()?)")
+            if (match.guess && match.type && match.type !== "fn()?)")
                return;
 
-            var isContextual = currentNode.cons === "PropAccess" && !c.guess;
+            var isContextual = currentNode.cons === "PropAccess" && !match.guess;
 
-            if (!isContextual && c.origin === "browser" && prefix.length < 3)
+            if (!isContextual && match.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
 
-            var isFromLibrary = c.origin && c.origin[0] !== "/";
+            var isFromLibrary = match.origin && match.origin[0] !== "/";
             var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
-            var icon = getIcon(c, priority);
+            var icon = getIcon(match, priority);
 
             // Clean up messy node completions
-            if (c.name[0] === '"') {
-                if (c.origin !== "node")
+            if (match.name[0] === '"') {
+                if (match.origin !== "node")
                     return;
-                c.name = c.name.replace(/"(.*)"/, "$1");
+                match.name = match.name.replace(/"(.*)"/, "$1");
                 icon = "package";
             }
                         
-            var isFunction = c.type && c.type.match(/^fn\(/)
-            var isAnonymous = c.type && c.type.match(/^{/);
-            var parameters = isFunction && getSignature(c).parameters.map(function(p) {
-                return p.name + (p.type && p.type !== "?" ? " : " + p.type : "");
-            }).join(", ");
-            var doc = (c.type && !isFunction && !isAnonymous && c.type !== "?" ? "Type: " + c.type + "<p>" : "")
-                    + (c.doc ? filterDocumentation(c.doc) : "");
-            var fullName = c.name
-                + (isFunction ? "(" + parameters + ")" : "");
+            var isFunction = match.type && match.type.match(/^fn\(/);
+            var isAnonymous = match.type && match.type.match(/^{/);
+            var fullName;
+            var fullNameTyped;
+            if (isFunction) {
+                var sig = getSignature(match);
+                var parameters = sig.parameters;
+                fullName = match.name + "(" + parameters.map(function(p) {
+                    return p.name;
+                }).join(", ") + ")";
+                fullNameTyped = match.name + "(" + parameters.map(function(p) {
+                    return p.name + (p.type && p.type !== "?" ? " : " + p.type : "");
+                }).join(", ") + ")";
+                if (sig.returnType && sig.returnType !== "?")
+                    fullNameTyped = fullNameTyped + " : " + sig.returnType;
+            }
+            else {
+                fullName = fullNameTyped = match.name;
+                if (match.type && match.type !== "?")
+                    fullNameTyped = fullNameTyped + " : " + match.type;
+            }
+
+            var doc = (match.type && !isFunction && !isAnonymous && match.type !== "?" ? "Type: " + match.type + "<p>" : "")
+                    + (match.doc ? filterDocumentation(match.doc) : "");
             return {
-                id: c.name,
+                id: match.name,
                 name: fullName,
-                replaceText: c.name + (isFunction ? "(^^)" : ""),
+                replaceText: match.name + (isFunction ? "(^^)" : ""),
                 icon: icon,
                 priority: priority,
                 isContextual: isContextual,
-                docHead: fullName,
-                doc: (c.origin && isFromLibrary ? "Origin: " + c.origin + "<p>" : "") + doc,
+                docHead: fullNameTyped,
+                doc: (match.origin && isFromLibrary ? "Origin: " + match.origin + "<p>" : "") + doc,
                 isFunction: isFunction
             };
         }).filter(function(c) {
@@ -384,24 +399,24 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
             return callback();
 
         var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : currentNode;
-        var signature = getSignature(result);
-        if (signature.parameters[argIndex])
-            signature.parameters[argIndex].active = true;
+        var sig = getSignature(result);
+        if (sig.parameters[argIndex])
+            sig.parameters[argIndex].active = true;
 
-        signature.parameters.forEach(function(p) {
+        sig.parameters.forEach(function(p) {
             if (p.type === "?")
                 delete p.type;
         });
-        if (signature.returnType === "?")
-            delete signature.returnType;
+        if (sig.returnType === "?")
+            delete sig.returnType;
 
         callback({
             hint: {
                 signatures: [{
                     name: result.name,
                     doc: result.doc && result.doc.replace(/^\* /g, ""),
-                    parameters: signature.parameters,
-                    returnType: signature.returnType
+                    parameters: sig.parameters,
+                    returnType: sig.returnType
                 }],
             },
             displayPos: displayPos,
@@ -542,6 +557,9 @@ function getSignature(property) {
                 depth++;
                 inType = false;
                 inReturn = true;
+                break;
+            case "?":
+                parameters[parameterIndex].name = "[" + parameters[parameterIndex].name + "]";
                 break;
             default:
                 if (inReturn)
