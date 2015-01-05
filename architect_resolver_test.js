@@ -132,8 +132,8 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     return afterCompleteOpen(callback, 100);
                 timer = setTimeout(function() {
                     callback(el);
-                }, 10);
-            }, delay || 10);
+                }, 5);
+            }, delay || 5);
         }
         
         function afterCompleteDocOpen(callback, delay) {
@@ -143,8 +143,8 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     return afterCompleteDocOpen(callback);
                 timer = setTimeout(function() {
                     callback(el);
-                }, 10);
-            }, delay || 10);
+                }, 5);
+            }, delay || 5);
         }
         
         function isCompleterOpen() {
@@ -263,6 +263,14 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     afterCompleteDocOpen(function(el) {
                         expect.html(el).text(/dummy[\s\S]*documentation/);
                         assert(!el.textContent.match(/\*/));
+                        done();
+                    });
+                });
+                
+                it('shows module name completions for imports', function(done) {
+                    jsTab.editor.ace.onTextInput('main.consumes = ["u');
+                    afterCompleteOpen(function(el) {
+                        expect.html(el).text(/ui/);
                         done();
                     });
                 });

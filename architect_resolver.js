@@ -48,6 +48,8 @@ define(function(require, exports, module) {
                     worker.emit("architectPluginsResult", { data: knownPlugins });
                 });
             });
+
+            language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/architect_resolver_worker");
         }
         
         plugin.on("load", function(){

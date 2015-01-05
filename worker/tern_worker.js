@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
     
-var acornCache = require("./acorn_cache");
+require("./acorn_cache");
 var tern = require("tern/lib/tern");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
