@@ -432,7 +432,7 @@ handler.getArgIndex = function(node, doc, cursorPos) {
     var cursorTreePos = { line: cursorPos.row, col: cursorPos.column };
     var result = -1;
     node.rewrite(
-        'Call(e, args)', function(b) {
+        'Call(e, args)', "New(e, args)", function(b) {
             // Try to determine at which argument the cursor is located in order
             // to be able to show a label
             result = -1;
@@ -480,7 +480,7 @@ handler.getArgIndex = function(node, doc, cursorPos) {
 function getCallNode(currentNode, cursorPos) {
     var result;
     currentNode.traverseUp(
-        'Call(e, args)', function(b, node) {
+        'Call(e, args)', 'New(e, args)', function(b, node) {
             result = node;
             return node;
         },
