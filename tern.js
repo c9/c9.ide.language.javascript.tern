@@ -3,7 +3,8 @@
  */
 define(function(require, exports, module) {
     main.consumes = [
-        "Plugin", "language"
+        "Plugin", "language",
+        "language.tern.architect_resolver" // implicit worker-side dependency
     ];
     main.provides = ["language.tern"];
     return main;
