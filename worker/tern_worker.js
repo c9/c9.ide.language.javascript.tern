@@ -395,6 +395,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         docs: true,
         urls: true,
         caseInsensitive: false,
+        preferFunction: true,
     }, function(err, result) {
         if (err) {
             console.error(err.stack || err);
