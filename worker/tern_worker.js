@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
     
-require("./acorn_cache");
+var acornHelper = require("./acorn_helper");
 var tern = require("tern/lib/tern");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
@@ -151,6 +151,11 @@ function garbageCollect() {
         }
     }
 }
+
+handler.onDocumentOpen = function(path, doc, oldPath, callback) {
+    setJSXMode(path);
+    callback();
+};
 
 handler.analyze = function(value, ast, callback, minimalAnalysis) {
     if (fileCache[this.path])
@@ -512,6 +517,7 @@ function addTernFile(path, value) {
         return;
     lastAddPath = path;
     lastAddValue = value;
+    setJSXMode(path);
     ternWorker.addFile(path, value);
 }
 
@@ -583,6 +589,7 @@ function getSignature(property) {
 
 handler.$request = function(query, callback) {
     query.file = this.path;
+    setJSXMode(this.path);
 
     if (query.pos)
         query.end = query.start = {
@@ -625,6 +632,10 @@ handler.$flush = function(callback) {
         isDone = true;
         callback(err, result);
     }
+}
+
+function setJSXMode(path) {
+    acornHelper.setLanguage(/\.jsx$/.test(path) ? "jsx" : null);
 }
 
 });

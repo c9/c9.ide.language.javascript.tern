@@ -3,9 +3,9 @@
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     return mod(require("acorn/acorn"), require("acorn/acorn_loose"), require);
   if (typeof define == "function" && define.amd) // AMD
-    return define(["acorn/acorn", "acorn/acorn_loose"], mod);
+    return define(["acorn/acorn", "acorn/acorn_loose", "require", "exports"], mod);
   mod(tern, tern);
-})(function(acorn, acornLoose, require) {
+})(function(acorn, acornLoose, require, exports) {
 
 var parse = acorn.parse;
 var parse_dammit = acornLoose.parse_dammit;
@@ -14,8 +14,19 @@ var lastInput;
 var lastOutput;
 var lastInputLoose;
 var lastOutputLoose;
+var language;
+
+if (exports)
+    exports.setLanguage = function(value) {
+        language = value;
+    };
 
 acorn.parse = function(input, options) {
+    if (language === "jsx") {
+        // HACK: as long as we used an unpatched acorn, make jsx easier to parse
+        input = input.replace(/\/>|<\//g, " -").replace(/[<>]/g, "-");
+    }
+    
     if (input === lastInput)
         return lastOutput;
     if (input === lastInputLoose)
