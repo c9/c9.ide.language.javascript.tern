@@ -8,6 +8,7 @@ var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
+var getParameterDocs = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").getParameterDocs;
 var architectResolver = require("./architect_resolver_worker");
 var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_completer");
 
@@ -409,9 +410,12 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (sig.parameters[argIndex])
             sig.parameters[argIndex].active = true;
 
+        var parameterDocs = getParameterDocs(result.doc);
         sig.parameters.forEach(function(p) {
             if (p.type === "?")
                 delete p.type;
+            if (parameterDocs["_" + p.name])
+                p.doc = parameterDocs["_" + p.name];
         });
         if (sig.returnType === "?")
             delete sig.returnType;
