@@ -574,12 +574,16 @@ function getSignature(property) {
                     parameters[parameterIndex].name = "[" + parameters[parameterIndex].name + "]";
                 break;
             default:
+                if (sig[i] === "]")
+                    depth--;
                 if (inReturn)
                     returnType += sig[i];
                 else if (!depth && !inType)
                     parameters[parameterIndex].name += sig[i];
                 else if (!depth && inType)
                     parameters[parameterIndex].type += sig[i];
+                if (sig[i] === "[")
+                    depth++;
         }
     }
 
