@@ -209,6 +209,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             // Avoid random suggestions like angular.js properties on any object
             if (match.guess && match.type && match.type !== "fn()?)")
                return;
+            if (match.type === "?")
+                delete match.type;
 
             var isContextual = currentNode.cons === "PropAccess" && !match.guess;
 
