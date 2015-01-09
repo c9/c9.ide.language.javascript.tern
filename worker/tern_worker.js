@@ -238,18 +238,18 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                     return p.name;
                 }).join(", ") + ")";
                 fullNameTyped = match.name + "(" + parameters.map(function(p) {
-                    return p.name + (p.type && p.type !== "?" ? " : " + p.type : "");
+                    return p.name + (p.type ? " : " + p.type : "");
                 }).join(", ") + ")";
-                if (sig.returnType && sig.returnType !== "?")
+                if (sig.returnType)
                     fullNameTyped = fullNameTyped + " : " + sig.returnType;
             }
             else {
                 fullName = fullNameTyped = match.name;
-                if (match.type && match.type !== "?")
+                if (match.type)
                     fullNameTyped = fullNameTyped + " : " + match.type;
             }
 
-            var doc = (match.type && !isFunction && !isAnonymous && match.type !== "?" ? "Type: " + match.type + "<p>" : "")
+            var doc = (match.type && !isFunction && !isAnonymous ? "Type: " + match.type + "<p>" : "")
                     + (match.doc ? filterDocumentation(match.doc) : "");
             return {
                 id: match.name,
@@ -419,6 +419,8 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         });
         if (sig.returnType === "?")
             delete sig.returnType;
+        if (sig.returnType === "[]")
+            sig.returnType = "Array";
 
         callback({
             hint: {
@@ -586,6 +588,13 @@ function getSignature(property) {
                     depth++;
         }
     }
+
+    parameters.forEach(function(p) {
+        if (p.type === "?")
+            delete p.type;
+        if (p.type === "[]")
+            p.type = "Array";
+    })
 
     if (parameters[0].name === "")
         parameters.shift();
