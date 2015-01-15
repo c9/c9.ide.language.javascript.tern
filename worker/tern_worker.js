@@ -566,7 +566,7 @@ function getSignature(property) {
             case " ":
                 break;
             case "-": // ->
-                if (depth)
+                if (depth >= 0)
                     break;
                 i++;
                 depth++;
@@ -580,7 +580,7 @@ function getSignature(property) {
             default:
                 if (sig[i] === "]")
                     depth--;
-                if (inReturn)
+                if (!depth && inReturn)
                     returnType += sig[i];
                 else if (!depth && !inType)
                     parameters[parameterIndex].name += sig[i];
