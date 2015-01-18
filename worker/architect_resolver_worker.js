@@ -64,7 +64,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             replaceText: c,
             priority: 5
         };
-    }))
+    }));
 };
 
 });
