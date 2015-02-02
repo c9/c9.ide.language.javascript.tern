@@ -14,11 +14,7 @@ var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_com
 
 // TODO: async fetch?
 var TERN_DEFS = [
-    JSON.parse(completeUtil.fetchText("lib/tern/defs/browser.json")),
     JSON.parse(completeUtil.fetchText("lib/tern/defs/ecma5.json")),
-    JSON.parse(completeUtil.fetchText("lib/tern/defs/jquery.json")),
-    JSON.parse(completeUtil.fetchText("lib/tern/defs/underscore.json")),
-    // JSON.parse(completeUtil.fetchText("tern/defs/chai.json")),
 ];
 
 var TERN_PLUGINS = {
@@ -116,6 +112,11 @@ handler.init = function(callback) {
         dirCache[dir][file] = true;
         lastCacheRead = Date.now();
     });
+    
+    handler.sender.on("tern_set_def_enabled", function(e) {
+        setDefEnabled(e.data.name, e.data.def, e.data.enabled);
+    });
+    
     util.$onWatchDirChange(onWatchDirChange);
     setInterval(garbageCollect, 60000);
     callback();
@@ -655,6 +656,23 @@ handler.$flush = function(callback) {
         isDone = true;
         callback(err, result);
     }
+};
+
+function setDefEnabled(name, def, enabled) {
+    if (!enabled) {
+        ternWorker.defs = ternWorker.defs.filter(function(d) {
+            d["!name"] !== name;
+        });
+        ternWorker.reset();
+    }
+
+    if (typeof def == "string") {
+        // TODO: async fetch
+        def = JSON.parse(completeUtil.fetchText(def));
+    }
+    
+    ternWorker.defs.push(def);
+    ternWorker.reset();
 }
 
 function setJSXMode(path) {
