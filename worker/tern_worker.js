@@ -664,6 +664,7 @@ function setDefEnabled(name, def, enabled) {
             d["!name"] !== name;
         });
         ternWorker.reset();
+        return;
     }
 
     if (typeof def == "string") {
