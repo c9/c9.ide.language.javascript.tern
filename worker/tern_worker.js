@@ -427,7 +427,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         callback({
             hint: {
                 signatures: [{
-                    name: result.name,
+                    name: result.name.replace(/.*\./, ""),
                     doc: result.doc && result.doc.replace(/^\* /g, ""),
                     parameters: sig.parameters,
                     returnType: sig.returnType
@@ -596,14 +596,17 @@ function getSignature(property) {
             delete p.type;
         if (p.type === "[]")
             p.type = "Array";
-    })
+        if (p.type)
+            p.type = p.type.replace(/.*\./, "");
+    });
+    
 
     if (parameters[0].name === "")
         parameters.shift();
 
     return {
         parameters: parameters,
-        returnType: returnType || undefined
+        returnType: returnType && returnType.replace(/.*\./, "")
     };
 }
 
