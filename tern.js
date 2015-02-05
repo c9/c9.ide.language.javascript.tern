@@ -36,7 +36,7 @@ define(function(require, exports, module) {
                 // TODO: register "extra" defs?
             }
 
-            registerDef("JQuery", "lib/tern/defs/jquery.json", true),
+            registerDef("jQuery", "lib/tern/defs/jquery.json", true),
             registerDef("Browser built-in", "lib/tern/defs/browser.json", true);
             registerDef("Underscore", "lib/tern/defs/underscore.json"),
             registerDef("Chai", "tern/defs/chai.json");
@@ -65,8 +65,8 @@ define(function(require, exports, module) {
             });
         }
         
-        function getDefs() {
-            return defs;
+        function getDefs(preferenceDefsOnly) {
+            return preferenceDefsOnly ? preferenceDefs : defs;
         }
         
         plugin.on("load", load);
@@ -94,6 +94,8 @@ define(function(require, exports, module) {
             
             /**
              * Get a list of all definitions.
+             * 
+             * @param {Boolean} Return only definitions to show in preferences.
              * @return {String[]}
              */
             getDefs: getDefs
