@@ -9,15 +9,13 @@
         "url": "http://github.com/c9/c9.ide.language.javascript.tern.git"
     },
     "plugins": {
-        "plugin": {
-            "architect_resolver": {},
-            "tern": {}
-        }
+        "architect_resolver": {},
+        "tern": {}
     },
     "categories": [
         "core"
     ],
     "licenses": [
-        ""
+        "AGPL"
     ]
 }
