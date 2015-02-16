@@ -11,7 +11,7 @@ define(function(require, exports, module) {
         var language = imports.language;
         
         var plugin = new Plugin("Ajax.org", main.consumes);
-        var builtins = require("text!lib/tern_from_ts/sigs/__list.json");
+        // var builtins = require("text!lib/tern_from_ts/sigs/__list.json");
         
         var defs = {};
         var preferenceDefs = {};
@@ -23,6 +23,8 @@ define(function(require, exports, module) {
             
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
             
+            // disabled until there is a support for async loading
+            /*
             var builtinSigs;
             try {
                 builtinSigs = JSON.parse(builtins).sigs;
@@ -35,6 +37,7 @@ define(function(require, exports, module) {
                 registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
                 // TODO: register "extra" defs?
             }
+            */
 
             registerDef("jQuery", "lib/tern/defs/jquery.json", true),
             registerDef("Browser built-in", "lib/tern/defs/browser.json", true);
