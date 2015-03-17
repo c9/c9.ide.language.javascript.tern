@@ -67,6 +67,10 @@ handler.init = function(callback) {
         getFile: function(file, callback) {
             if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
                 file += ".js";
+            // TODO we can use file cache in navigate to find a folder for unresolved modules
+            if (file[0] != "/")
+                file = "/" + file;
+                
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
                     err = new Error("File is too large to include");
@@ -102,6 +106,9 @@ handler.init = function(callback) {
     ternWorker.on("beforeLoad", function(e) {
         var file = e.name;
         var dir = dirname(e.name);
+        
+        if (dir[0] != "/")
+            return;
         
         if (!dirCache[dir])
             util.$watchDir(dir, handler);
