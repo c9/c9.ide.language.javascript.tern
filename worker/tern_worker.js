@@ -295,6 +295,8 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
         }
         if (!result.file)
             return callback();
+        if (!result.file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
+            result.file += ".js";
         callback({
             path: result.file,
             row: result.start.line,
