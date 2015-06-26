@@ -3,7 +3,7 @@
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     return mod(require("acorn/acorn"), require("acorn/acorn_loose"), require);
   if (typeof define == "function" && define.amd) // AMD
-    return define(["acorn/acorn", "acorn/acorn_loose", "require", "exports"], mod);
+    return define(["acorn/dist/acorn", "acorn/dist/acorn_loose", "require", "exports"], mod);
   mod(tern, tern);
 })(function(acorn, acornLoose, require, exports) {
 

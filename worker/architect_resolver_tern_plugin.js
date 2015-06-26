@@ -3,7 +3,7 @@
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     return mod(require("../lib/infer"), require("../lib/tern"), require("../lib/comment"), require("acorn/util/walk"), require);
   if (typeof define == "function" && define.amd) // AMD
-    return define(["tern/lib/infer", "tern/lib/tern", "tern/lib/comment", "acorn/util/walk", "require", "exports"], mod);
+    return define(["tern/lib/infer", "tern/lib/tern", "tern/lib/comment", "acorn/dist/walk", "require", "exports"], mod);
   mod(tern, tern);
 })(function(infer, tern, comment, walk, require, exports) {
 
