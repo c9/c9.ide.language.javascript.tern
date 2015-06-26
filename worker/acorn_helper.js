@@ -29,8 +29,12 @@ acorn.parse = function(input, options) {
     
     if (input === lastInput)
         return lastOutput;
-    if (input === lastInputLoose)
-        return lastOutputLoose;
+    if (input === lastInputLoose) {
+        // treehugger calls parse without directSourceFile which breaks tern
+        // TODO is there a way to set sourceFile instead of reparsing?
+        if (!options.directSourceFile || lastOutputLoose.sourceFile)
+            return lastOutputLoose;
+    }
     
     lastOutput = filterDefine(parse(input, options));
     lastInput = input;
