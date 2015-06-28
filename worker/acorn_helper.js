@@ -42,9 +42,10 @@ acorn.parse = function(input, options) {
 };
 
 acornLoose.parse_dammit = function(input, options) {
-    if (input === lastInputLoose)
-        return lastOutputLoose;
-    
+    if (input === lastInputLoose) {
+        if (!options.directSourceFile || lastOutputLoose.sourceFile)
+            return lastOutputLoose;
+    }
     lastOutputLoose = filterDefine(parse_dammit(input, options));
     lastInputLoose = input;
     return lastOutputLoose;
