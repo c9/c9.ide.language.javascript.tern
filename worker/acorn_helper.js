@@ -6,7 +6,7 @@
     return define(["acorn/dist/acorn", "acorn/dist/acorn_loose", "require", "exports"], mod);
   mod(tern, tern);
 })(function(acorn, acornLoose, require, exports) {
-
+var File = function() {} // TODO? use require("tern/lib/tern").File
 var parse = acorn.parse;
 var parse_dammit = acornLoose.parse_dammit;
 
@@ -22,30 +22,30 @@ if (exports)
     };
 
 acorn.parse = function(input, options) {
+    return acornLoose.parse_dammit(input, options);
+};
+
+acornLoose.parse_dammit = function(input, options) {
     if (language === "jsx") {
         // HACK: as long as we used an unpatched acorn, make jsx easier to parse
         input = input.replace(/\/>|<\//g, " -").replace(/[<>]/g, "-");
     }
-    
-    if (input === lastInput)
-        return lastOutput;
+    // console.log("call")
     if (input === lastInputLoose) {
-        // treehugger calls parse without directSourceFile which breaks tern
-        // TODO is there a way to set sourceFile instead of reparsing?
-        if (!options.directSourceFile || lastOutputLoose.sourceFile)
-            return lastOutputLoose;
+        // console.log("reuse")
+        if (options.directSourceFile && lastOutputLoose.sourceFile != options.directSourceFile) {
+            // console.log("copy")
+            for (var i in options.directSourceFile)
+                lastOutputLoose.sourceFile[i] = options.directSourceFile[i];
+            lastOutputLoose.sourceFile.ast = lastOutputLoose;
+        }
+        return lastOutputLoose;
     }
-    
-    lastOutput = filterDefine(parse(input, options));
-    lastInput = input;
-    return lastOutput;
-};
-
-acornLoose.parse_dammit = function(input, options) {
-    if (input === lastInputLoose) {
-        if (!options.directSourceFile || lastOutputLoose.sourceFile)
-            return lastOutputLoose;
+    if (!options.directSourceFile) {
+        options.directSourceFile = new File();
+        options.directSourceFile
     }
+    // console.log("recompute")
     lastOutputLoose = filterDefine(parse_dammit(input, options));
     lastInputLoose = input;
     return lastOutputLoose;
