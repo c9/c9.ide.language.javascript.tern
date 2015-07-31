@@ -61,6 +61,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         return {
             name: c,
             icon: "package",
+            identifierRegex: /[a-zA-Z_0-9\$\/\.]/,
             replaceText: c,
             priority: 5
         };
