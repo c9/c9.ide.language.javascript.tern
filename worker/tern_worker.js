@@ -70,11 +70,7 @@ handler.init = function(callback) {
             // TODO we can use file cache in navigate to find a folder for unresolved modules
             if (file[0] != "/")
                 file = "/" + file;
-            
-            // HACK: analysis of schema.js triggers memory leak (https://github.com/c9/newclient/issues/8552)
-            if (file.match(/\/schema.js$/))
-                return callback(new Error("Refusing to load schema.js; may trigger issue c9/newclient#8552"));
-
+                
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
                     err = new Error("File is too large to include");
@@ -172,10 +168,6 @@ handler.onDocumentOpen = function(path, doc, oldPath, callback) {
 
 handler.analyze = function(value, ast, callback, minimalAnalysis) {
     if (fileCache[this.path])
-        return callback();
-    
-    // HACK: analysis of schema.js triggers memory leak (https://github.com/c9/newclient/issues/8552)
-    if (this.path.match(/\/schema.js$/))
         return callback();
 
     // Pre-analyze  the first time we see a file, loading any imports
