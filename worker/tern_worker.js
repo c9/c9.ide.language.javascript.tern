@@ -560,9 +560,9 @@ function getSignature(property) {
     var inReturn = false;
     for (var i = "fn(".length; i < sig.length; i++) {
         switch (sig[i]) {
-            case "(":
+            case "(": case "{":
                 depth++; break;
-            case ")":
+            case ")": case "}":
                 depth--; break;
             case ":":
                 inType = true; break;
