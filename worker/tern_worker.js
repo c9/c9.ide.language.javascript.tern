@@ -1,5 +1,4 @@
 define(function(require, exports, module) {
-    
 var acornHelper = require("./acorn_helper");
 var tern = require("tern/lib/tern");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
@@ -9,29 +8,24 @@ var util = require("plugins/c9.ide.language/worker_util");
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 var getParameterDocs = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").getParameterDocs;
-var architectResolver = require("./architect_resolver_worker");
+var architectResolver = null;
 var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_completer");
 
 // TODO: async fetch?
-var TERN_DEFS = [
-    JSON.parse(completeUtil.fetchText("lib/tern/defs/ecma5.json")),
-];
+var TERN_DEFS = [];
 
 var TERN_PLUGINS = {
-    angular: require("tern/plugin/angular") && true,
-    component: require("tern/plugin/component") && true,
-    doc_comment: require("tern/plugin/doc_comment") && true,
-    node: require("tern/plugin/node") && true,
-    requirejs: require("tern/plugin/requirejs") && true,
-    architect_resolver: architectResolver && true,
     // TODO: only include meteor completions if project has a .meteor folder,
     //       or if we find 1 or more meteor globals anywhere
     // TODO: maybe enable this meteor plugin again?
     // meteor: require("./lib/tern-meteor/meteor") && true,
     // TODO: use https://github.com/borisyankov/DefinitelyTyped
+    // TODO: move the mentioned tern-plugin definitions to c9-plugin/tern
 };
 
 var ternWorker;
+var ternServerOptions = {};
+var ternRequestOptions = {};
 var fileCache = {};
 var dirCache = {};
 var lastAddPath;
@@ -41,6 +35,20 @@ var MAX_CACHE_AGE = 60 * 1000 * 10;
 var MAX_FILE_SIZE = 200 * 1024;
 var PRIORITY_DEFAULT = 5;
 var PRIORITY_LIBRARY_GLOBAL = 0;
+
+function mix() {
+    var arg, prop, child = {};
+   for (arg = 0; arg < arguments.length; arg += 1) {
+       if(!arguments[arg]) {continue;}
+        for (prop in arguments[arg]) {
+            if (arguments[arg].hasOwnProperty(prop)) {
+                child[prop] = arguments[arg][prop];
+            }
+        }
+    }
+    return child;
+}
+
     
 handler.handlesLanguage = function(language) {
     // Note that we don't really support jsx here,
@@ -59,12 +67,12 @@ handler.getMaxFileSizeSupported = function() {
 
 handler.init = function(callback) {
     ternWorker = new tern.Server({
-        async: true,
-        defs: TERN_DEFS,
-        plugins: TERN_PLUGINS,
-        dependencyBudget: MAX_FILE_SIZE,
-        reuseInstances: true,
-        getFile: function(file, callback) {
+        async: typeof ternServerOptions.async !== 'undefined'? ternServerOptions.async : true,
+        defs: typeof ternServerOptions.defs !== 'undefined'? ternServerOptions.defs : TERN_DEFS,
+        plugins: typeof ternServerOptions.plugins !== 'undefined'? ternServerOptions.plugins : TERN_PLUGINS,
+        dependencyBudget: typeof ternServerOptions.dependencyBudget !== 'undefined'? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
+        reuseInstances: typeof ternServerOptions.reuseInstances !== 'undefined'? ternServerOptions.reuseInstances : true,
+        getFile: typeof ternServerOptions.getFile !== 'undefined'? ternServerOptions.getFile : function(file, callback) {
             if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
                 file += ".js";
             // TODO we can use file cache in navigate to find a folder for unresolved modules
@@ -124,6 +132,67 @@ handler.init = function(callback) {
         setDefEnabled(e.data.name, e.data.def, e.data.enabled);
     });
     
+    handler.sender.on("tern_set_server_options", function(e) {
+        var target = ternWorker.options || ternServerOptions, prop;
+        for(prop in e.data) {
+            target[prop] = e.data[prop];
+        }
+    });
+    
+    handler.sender.on("tern_get_def_names", function(e) {
+        var i, names = [];
+        for(i = 0; i < ternWorker.defs.length; i++) {
+            names.push(ternWorker.defs[i]['!name']);
+        }
+        handler.sender.emit("tern_read_def_names", names);
+    });
+    
+    handler.sender.on("tern_set_request_options", function(e) {
+        if(e.data) {
+            ternRequestOptions = e.data;
+        }
+    });
+    
+    handler.sender.on("tern_get_plugins", function(e) {
+        var pluginName, plugins = [], pluginToList;
+        for(pluginName in ternWorker.options.plugins) {
+            pluginToList = {
+              name: pluginName,
+              enabled: ternWorker.options.plugins[pluginName]
+            };
+            plugins.push(pluginToList);
+        }
+        handler.sender.emit("tern_read_plugins", plugins);
+    });
+    
+    handler.sender.on("tern_update_plugins", function(e) {
+        var updatedPluginConfig = e.data, targetPluginInfo, requiresReset = false, pluginToWorkWith, targetPluginInfoIndex, pluginExecResult;
+        for(targetPluginInfoIndex in updatedPluginConfig) {
+            targetPluginInfo = updatedPluginConfig[targetPluginInfoIndex];
+            pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
+           if(typeof pluginToWorkWith === 'undefined' && typeof targetPluginInfo.path === 'string') {
+               //register new plugin
+               pluginExecResult = require(targetPluginInfo.path);
+               pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = TERN_PLUGINS[targetPluginInfo.name] =  pluginExecResult && targetPluginInfo.enabled;
+               
+               //add special condition for architectResolver
+               if(targetPluginInfo.name === 'architect_resolver') {
+                   architectResolver = pluginExecResult;
+               }
+               requiresReset = true;
+           } else {
+               if(pluginToWorkWith !== targetPluginInfo.enabled) {
+                   //check for changed status
+                   pluginToWorkWith = TERN_PLUGINS[targetPluginInfo.name] = targetPluginInfo.enabled;
+                   requiresReset = true;
+               }
+           }
+        }
+        if(requiresReset) {
+            ternWorker.reset();
+        }
+    });
+    
     util.$onWatchDirChange(onWatchDirChange);
     setInterval(garbageCollect, 60000);
     callback();
@@ -177,7 +246,7 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     };
     addTernFile(this.path, value);
 
-    architectResolver.onReady(function() {
+    architectResolver && architectResolver.onReady(function() {
         handler.$flush(function(err) {
             if (err) console.error(err.stack || err);
             callback();
@@ -196,8 +265,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     
     var line = doc.getLine(pos.row);
     var prefix = util.getPrecedingIdentifier(line, pos.column);
-
-    var options = {
+    var defaultOptions = {
         type: "completions",
         pos: pos,
         types: true,
@@ -207,6 +275,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         guess: true,
         caseInsensitive: false,
     };
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
     handler.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
@@ -280,7 +349,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
 
 handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
     addTernFile(this.path, doc.getValue());
-    this.$request({
+    var defaultOptions = {
         type: "definition",
         pos: pos,
         types: true,
@@ -288,7 +357,9 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
         docs: true,
         urls: true,
         caseInsensitive: false,
-    }, function(err, result) {
+    };
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -309,8 +380,8 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
 /* UNDONE: getRenamePositions(); doesn't appear to properly handle local references
    e.g. var foo = child_process.exec(); foo(); -> foo can't be renamed
 handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) {
-    addTernFile(this.path, doc.getValue());
-    this.$request({
+    var defaultOptions = addTernFile(this.path, doc.getValue());
+    {
         type: "definition",
         pos: pos,
         types: true,
@@ -318,7 +389,9 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
         docs: true,
         urls: true,
         caseInsensitive: false,
-    }, function(err, def) {
+    };
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, def) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -327,8 +400,7 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
             console.error("Multi-file rename not supported");
             return callback();
         }
-
-        handler.$request({
+        var defaultOptions = {
             type: "refs",
             pos: pos,
             types: true,
@@ -336,7 +408,9 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
             docs: true,
             urls: true,
             caseInsensitive: false,
-        }, function(err, refs) {
+        };
+        var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+        handler.$request(options, function(err, refs) {
             if (err) {
                 console.error(err.stack || err);
                 return callback();
@@ -400,7 +474,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         return callback(); // TODO: support this case??
 
     addTernFile(this.path, doc.getValue());
-    this.$request({
+    var defaultOptions = {
         type: "type",
         pos: { row: callNode[0].getPos().el, column: callNode[0].getPos().ec },
         types: true,
@@ -409,7 +483,9 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         urls: true,
         caseInsensitive: false,
         preferFunction: true,
-    }, function(err, result) {
+    };
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -668,20 +744,26 @@ handler.$flush = function(callback) {
 };
 
 function setDefEnabled(name, def, enabled) {
+    var i;
     if (!enabled) {
         ternWorker.defs = ternWorker.defs.filter(function(d) {
-            d["!name"] !== name;
+            return d["!name"] !== name;
         });
         ternWorker.reset();
         return;
     }
 
-    if (typeof def == "string") {
-        // TODO: async fetch
-        def = JSON.parse(completeUtil.fetchText(def));
+    if (!(def instanceof Array)) {
+        def = [def];
     }
-    
-    ternWorker.defs.push(def);
+    for (i = 0; i < def.length; i++) {
+        if (typeof def[i] == "string") {
+            // TODO: async fetch
+            def[i] = JSON.parse(completeUtil.fetchText(def[i]));
+        }
+
+        ternWorker.defs.push(def[i]);
+    }
     ternWorker.reset();
 }
 

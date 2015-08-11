@@ -10,7 +10,7 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         var language = imports.language;
         
-        var plugin = new Plugin("Ajax.org", main.consumes);
+        var plugin = new Plugin(" Ajax.org", main.consumes);
         // var builtins = require("text!lib/tern_from_ts/sigs/__list.json");
         
         var defs = {};
@@ -38,11 +38,72 @@ define(function(require, exports, module) {
                 // TODO: register "extra" defs?
             }
             */
-
-            registerDef("jQuery", "lib/tern/defs/jquery.json", true),
-            registerDef("Browser built-in", "lib/tern/defs/browser.json", true);
-            registerDef("Underscore", "lib/tern/defs/underscore.json"),
-            registerDef("Chai", "tern/defs/chai.json");
+            
+            var ternOptions = options.tern || {
+                plugins: {
+                    doc_comment: "tern/plugin/doc_comment",
+                    smartface: "plugins/smartface/loadInclude.js",
+                    angular: "tern/plugin/angular",
+                    component: "tern/plugin/component",
+                    doc_comment: "tern/plugin/doc_comment",
+                    node: "tern/plugin/node",
+                    requirejs: "tern/plugin/requirejs",
+                    architect_resolver: "./architect_resolver_worker"
+                },
+                defs: [
+                    {
+                        name: "ecma5",
+                        enabled: true,
+                        path: "lib/tern/defs/ecma5.json"
+                    },
+                    {
+                        name: "jQuery",
+                        enabled: true,
+                        path: "lib/tern/defs/jquery.json"
+                    },
+                    {
+                        name: "browser",
+                        enabled: true,
+                        path: "lib/tern/defs/browser.json"
+                    },
+                    {
+                        name: "underscore",
+                        enabled: false,
+                        path: "lib/tern/defs/underscore.json"
+                    },
+                    {
+                        name: "chai",
+                        enabled: false,
+                        path: "tern/defs/chai.json"
+                    }
+                ]
+            };
+            
+            ternPlugins(function callback(e) {
+                var pluginName, pluginPath;
+                for(pluginName in ternOptions.plugins) {
+                    pluginPath = ternOptions.plugins[pluginName];
+                    e.push({name: pluginName, enabled: true, path: pluginPath});    
+                }
+            });
+            
+            
+            var defsToAdd =[], defIndex, d;
+            for(defIndex in ternOptions.defs) {
+                d = ternOptions.defs[defIndex];
+                defs[d.name] = d.path;
+                if(d.enabled) {
+                    defsToAdd.push(d.path);
+                }
+            }
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.emit("tern_set_def_enabled", { data: {
+                    name: '',
+                    def: defsToAdd,
+                    enabled: true
+                }});
+            });
         }
         
         function registerDef(name, def, enable, hide) {
@@ -52,9 +113,10 @@ define(function(require, exports, module) {
             if (enable)
                 setDefEnabled(name, true);
         }
-        
+
         function setDefEnabled(name, enabled) {
-            if (!defs[name])
+            var defsDefinedByPlugin = ['angular', 'node', 'component', "requirejs"];
+            if (!defs[name] && defsDefinedByPlugin.indexOf(name) === -1)
                 throw new Error("Definition " + name + " not found");
             
             language.getWorker(function(err, worker) {
@@ -66,6 +128,51 @@ define(function(require, exports, module) {
                     enabled: enabled !== false
                 }});
             });
+        }
+        
+        function getTernDefNames(callback) {
+            if(typeof callback !== 'function') {return;}
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.on("tern_read_def_names", function tern_read_def_names (e){
+                    worker.off(tern_read_def_names);
+                    callback(e.data);
+                });
+                worker.emit("tern_get_def_names", { data: null});
+            });
+        }
+        
+        function setTernServerOptions(ternServerOptions) {
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.emit("tern_set_server_options", { data:ternServerOptions});
+            });
+        }
+        
+        function ternPlugins(callback) {
+            if(typeof callback !== 'function') {return;}
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.on("tern_read_plugins", function tern_read_plugins (e){
+                    var backupPluginStatus;
+                    worker.off(tern_read_plugins);
+                    backupPluginStatus = JSON.stringify(e.data);
+                    callback(e.data);
+                    if(JSON.stringify(e.data) != backupPluginStatus) {
+                        //state of plugins have changed, update ternWorker
+                        worker.emit("tern_update_plugins", {data: e.data});
+                    }
+                });
+                worker.emit("tern_get_plugins", { data: null});
+            });
+        }
+        
+        function setTernRequestOptions(ternRequestOptions) {
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.emit("tern_set_request_options", { data:ternRequestOptions});
+            });
+
         }
         
         function getDefs(preferenceDefsOnly) {
@@ -94,6 +201,48 @@ define(function(require, exports, module) {
              * @param name
              */
             setDefEnabled: setDefEnabled,
+            
+            /**
+             * Sets tern server options
+             * @param {Object} ternServerOptions
+             */
+            setTernServerOptions: setTernServerOptions,
+            
+            /**
+             * Gets list of loaded tern definition names
+             * @param {tern~getTernDefNamesCallback} callback required function to retrieve names
+             */
+            getTernDefNames: getTernDefNames,
+            /**
+             * This callback is to retrieve names of definitions
+             * @callback tern~getTernDefNamesCallback
+             * @param {Array.String} names Array of names
+             */
+             
+             /**
+             * The complete Triforce, or one or more components of the Triforce.
+             * @typedef {Object} tern~pluginInfo
+             * @property {String} name - name of the plugin
+             * @property {boolean} enabled - Setting it false marks plugin for removal
+             * @property {String} path - Parameter to provide while loading a new plugin
+             */
+             
+             /**
+              * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones
+              * @param {tern~ternPluginsCallback} callback required function to process status of plugins
+              */
+             ternPlugins: ternPlugins,
+             /**
+              * @callback tern~ternPluginsCallback
+              * @param {Array.tern~pluginInfo} e list of plugins with status
+              */
+             
+            
+            /**
+             * Sets tern request options
+             * @param {Object} ternRequestOptions
+             */
+            setTernRequestOptions: setTernRequestOptions,
             
             /**
              * Get a list of all definitions.
