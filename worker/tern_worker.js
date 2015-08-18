@@ -36,10 +36,14 @@ var MAX_FILE_SIZE = 200 * 1024;
 var PRIORITY_DEFAULT = 5;
 var PRIORITY_LIBRARY_GLOBAL = 0;
 
+/* function to perfom mixin
+ */
 function mix() {
     var arg, prop, child = {};
-   for (arg = 0; arg < arguments.length; arg += 1) {
-       if(!arguments[arg]) {continue;}
+    for (arg = 0; arg < arguments.length; arg += 1) {
+        if (!arguments[arg]) {
+            continue;
+        }
         for (prop in arguments[arg]) {
             if (arguments[arg].hasOwnProperty(prop)) {
                 child[prop] = arguments[arg][prop];
@@ -67,12 +71,12 @@ handler.getMaxFileSizeSupported = function() {
 
 handler.init = function(callback) {
     ternWorker = new tern.Server({
-        async: typeof ternServerOptions.async !== 'undefined'? ternServerOptions.async : true,
-        defs: typeof ternServerOptions.defs !== 'undefined'? ternServerOptions.defs : TERN_DEFS,
-        plugins: typeof ternServerOptions.plugins !== 'undefined'? ternServerOptions.plugins : TERN_PLUGINS,
-        dependencyBudget: typeof ternServerOptions.dependencyBudget !== 'undefined'? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
-        reuseInstances: typeof ternServerOptions.reuseInstances !== 'undefined'? ternServerOptions.reuseInstances : true,
-        getFile: typeof ternServerOptions.getFile !== 'undefined'? ternServerOptions.getFile : function(file, callback) {
+        async: typeof ternServerOptions.async !== "undefined"? ternServerOptions.async : true,
+        defs: typeof ternServerOptions.defs !== "undefined"? ternServerOptions.defs : TERN_DEFS,
+        plugins: typeof ternServerOptions.plugins !== "undefined"? ternServerOptions.plugins : TERN_PLUGINS,
+        dependencyBudget: typeof ternServerOptions.dependencyBudget !== "undefined"? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
+        reuseInstances: typeof ternServerOptions.reuseInstances !== "undefined"? ternServerOptions.reuseInstances : true,
+        getFile: typeof ternServerOptions.getFile !== "undefined"? ternServerOptions.getFile : function(file, callback) {
             if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
                 file += ".js";
             // TODO we can use file cache in navigate to find a folder for unresolved modules
@@ -133,62 +137,72 @@ handler.init = function(callback) {
     });
     
     handler.sender.on("tern_set_server_options", function(e) {
-        var target = ternWorker.options || ternServerOptions, prop;
-        for(prop in e.data) {
+        var target = ternWorker.options || ternServerOptions;
+        var prop;
+        for (prop in e.data) {
             target[prop] = e.data[prop];
         }
     });
-    
+
     handler.sender.on("tern_get_def_names", function(e) {
-        var i, names = [];
-        for(i = 0; i < ternWorker.defs.length; i++) {
-            names.push(ternWorker.defs[i]['!name']);
+        var i;
+        var names = [];
+        for (i = 0; i < ternWorker.defs.length; i++) {
+            names.push(ternWorker.defs[i]["!name"]);
         }
         handler.sender.emit("tern_read_def_names", names);
     });
-    
+
     handler.sender.on("tern_set_request_options", function(e) {
-        if(e.data) {
+        if (e.data) {
             ternRequestOptions = e.data;
         }
     });
-    
+
     handler.sender.on("tern_get_plugins", function(e) {
-        var pluginName, plugins = [], pluginToList;
-        for(pluginName in ternWorker.options.plugins) {
+        var pluginName
+        var plugins = [];
+        var pluginToList;
+        for (pluginName in ternWorker.options.plugins) {
             pluginToList = {
-              name: pluginName,
-              enabled: ternWorker.options.plugins[pluginName]
+                name: pluginName,
+                enabled: ternWorker.options.plugins[pluginName]
             };
             plugins.push(pluginToList);
         }
         handler.sender.emit("tern_read_plugins", plugins);
     });
-    
+
     handler.sender.on("tern_update_plugins", function(e) {
-        var updatedPluginConfig = e.data, targetPluginInfo, requiresReset = false, pluginToWorkWith, targetPluginInfoIndex, pluginExecResult;
-        for(targetPluginInfoIndex in updatedPluginConfig) {
+        var updatedPluginConfig = e.data;
+        var targetPluginInfo;
+        var requiresReset = false;
+        var pluginToWorkWith
+        var targetPluginInfoIndex;
+        var pluginExecResult;
+        for (targetPluginInfoIndex in updatedPluginConfig) {
             targetPluginInfo = updatedPluginConfig[targetPluginInfoIndex];
             pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
-           if(typeof pluginToWorkWith === 'undefined' && typeof targetPluginInfo.path === 'string') {
-               //register new plugin
-               pluginExecResult = require(targetPluginInfo.path);
-               pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = TERN_PLUGINS[targetPluginInfo.name] =  pluginExecResult && targetPluginInfo.enabled;
-               
-               //add special condition for architectResolver
-               if(targetPluginInfo.name === 'architect_resolver') {
-                   architectResolver = pluginExecResult;
-               }
-               requiresReset = true;
-           } else {
-               if(pluginToWorkWith !== targetPluginInfo.enabled) {
-                   //check for changed status
-                   pluginToWorkWith = TERN_PLUGINS[targetPluginInfo.name] = targetPluginInfo.enabled;
-                   requiresReset = true;
-               }
-           }
+            if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
+                //register new plugin
+                pluginExecResult = require(targetPluginInfo.path);
+                pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = TERN_PLUGINS[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
+
+                //add special condition for architectResolver
+                if (targetPluginInfo.name === "architect_resolver") {
+                    architectResolver = pluginExecResult;
+                }
+                requiresReset = true;
+            }
+            else {
+                if (pluginToWorkWith !== targetPluginInfo.enabled) {
+                    //check for changed status
+                    pluginToWorkWith = TERN_PLUGINS[targetPluginInfo.name] = targetPluginInfo.enabled;
+                    requiresReset = true;
+                }
+            }
         }
-        if(requiresReset) {
+        if (requiresReset) {
             ternWorker.reset();
         }
     });

@@ -10,7 +10,7 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         var language = imports.language;
         
-        var plugin = new Plugin(" Ajax.org", main.consumes);
+        var plugin = new Plugin("Ajax.org", main.consumes);
         // var builtins = require("text!lib/tern_from_ts/sigs/__list.json");
         
         var defs = {};
@@ -50,62 +50,65 @@ define(function(require, exports, module) {
                     requirejs: "tern/plugin/requirejs",
                     architect_resolver: "./architect_resolver_worker"
                 },
-                defs: [
-                    {
-                        name: "ecma5",
-                        enabled: true,
-                        path: "lib/tern/defs/ecma5.json"
-                    },
-                    {
-                        name: "jQuery",
-                        enabled: true,
-                        path: "lib/tern/defs/jquery.json"
-                    },
-                    {
-                        name: "browser",
-                        enabled: true,
-                        path: "lib/tern/defs/browser.json"
-                    },
-                    {
-                        name: "underscore",
-                        enabled: false,
-                        path: "lib/tern/defs/underscore.json"
-                    },
-                    {
-                        name: "chai",
-                        enabled: false,
-                        path: "tern/defs/chai.json"
-                    }
-                ]
+                defs: [{
+                    name: "ecma5",
+                    enabled: true,
+                    path: "lib/tern/defs/ecma5.json"
+                }, {
+                    name: "jQuery",
+                    enabled: true,
+                    path: "lib/tern/defs/jquery.json"
+                }, {
+                    name: "browser",
+                    enabled: true,
+                    path: "lib/tern/defs/browser.json"
+                }, {
+                    name: "underscore",
+                    enabled: false,
+                    path: "lib/tern/defs/underscore.json"
+                }, {
+                    name: "chai",
+                    enabled: false,
+                    path: "tern/defs/chai.json"
+                }]
             };
-            
+
             ternPlugins(function callback(e) {
-                var pluginName, pluginPath;
-                for(pluginName in ternOptions.plugins) {
+                var pluginName;
+                var pluginPath;
+                for (pluginName in ternOptions.plugins) {
                     pluginPath = ternOptions.plugins[pluginName];
-                    e.push({name: pluginName, enabled: true, path: pluginPath});    
+                    e.push({
+                        name: pluginName,
+                        enabled: true,
+                        path: pluginPath
+                    });
                 }
             });
-            
-            
-            var defsToAdd =[], defIndex, d;
-            for(defIndex in ternOptions.defs) {
+
+
+            var defsToAdd = []
+            var defIndex;
+            var d;
+            for (defIndex in ternOptions.defs) {
                 d = ternOptions.defs[defIndex];
                 defs[d.name] = d.path;
-                if(d.enabled) {
+                if (d.enabled) {
                     defsToAdd.push(d.path);
                 }
             }
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
-                worker.emit("tern_set_def_enabled", { data: {
-                    name: '',
-                    def: defsToAdd,
-                    enabled: true
-                }});
+                worker.emit("tern_set_def_enabled", {
+                    data: {
+                        name: "",
+                        def: defsToAdd,
+                        enabled: true
+                    }
+                });
             });
-        }
-        
+            }
+                    
         function registerDef(name, def, enable, hide) {
             defs[name] = def;
             if (!hide)
@@ -115,7 +118,7 @@ define(function(require, exports, module) {
         }
 
         function setDefEnabled(name, enabled) {
-            var defsDefinedByPlugin = ['angular', 'node', 'component', "requirejs"];
+            var defsDefinedByPlugin = ["angular", "node", "component", "requirejs"];
             if (!defs[name] && defsDefinedByPlugin.indexOf(name) === -1)
                 throw new Error("Definition " + name + " not found");
             
@@ -131,7 +134,7 @@ define(function(require, exports, module) {
         }
         
         function getTernDefNames(callback) {
-            if(typeof callback !== 'function') {return;}
+            if(typeof callback !== "function") {return;}
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 worker.on("tern_read_def_names", function tern_read_def_names (e){
@@ -150,7 +153,7 @@ define(function(require, exports, module) {
         }
         
         function ternPlugins(callback) {
-            if(typeof callback !== 'function') {return;}
+            if(typeof callback !== "function") {return;}
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 worker.on("tern_read_plugins", function tern_read_plugins (e){
@@ -188,6 +191,22 @@ define(function(require, exports, module) {
         
         plugin.freezePublicAPI({
             /**
+             * Callback function for getting tern definition list from directly tern server
+             * @typedef {Object} pluginInfo
+             * @property {String} name - name of the plugin
+             * @property {boolean} enabled - Setting it false marks plugin for removal
+             * @property {String} path - Parameter to provide while loading a new plugin
+             *
+             * This callback is to retrieve names of definitions
+             * @callback getTernDefNamesCallback
+             * @param {Array.String} names Array of names
+             *
+             * This callback is to retrieve plugin info
+             * @callback ternPluginsCallback
+             * @param {Array.pluginInfo} e list of plugins with status
+             */
+
+            /**
              * Add a tern definition that users can enable.
              * @param {String} name
              * @param {String|Object} def   The definition or a URL pointing to the definiton
@@ -210,33 +229,15 @@ define(function(require, exports, module) {
             
             /**
              * Gets list of loaded tern definition names
-             * @param {tern~getTernDefNamesCallback} callback required function to retrieve names
+             * @param {getTernDefNamesCallback} callback required function to retrieve names
              */
             getTernDefNames: getTernDefNames,
-            /**
-             * This callback is to retrieve names of definitions
-             * @callback tern~getTernDefNamesCallback
-             * @param {Array.String} names Array of names
-             */
-             
-             /**
-             * The complete Triforce, or one or more components of the Triforce.
-             * @typedef {Object} tern~pluginInfo
-             * @property {String} name - name of the plugin
-             * @property {boolean} enabled - Setting it false marks plugin for removal
-             * @property {String} path - Parameter to provide while loading a new plugin
-             */
              
              /**
               * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones
-              * @param {tern~ternPluginsCallback} callback required function to process status of plugins
+              * @param {ternPluginsCallback} callback required function to process status of plugins
               */
              ternPlugins: ternPlugins,
-             /**
-              * @callback tern~ternPluginsCallback
-              * @param {Array.tern~pluginInfo} e list of plugins with status
-              */
-             
             
             /**
              * Sets tern request options
@@ -246,8 +247,7 @@ define(function(require, exports, module) {
             
             /**
              * Get a list of all definitions.
-             * 
-             * @param {Boolean} Return only definitions to show in preferences.
+             * @param {Boolean} preferenceDefsOnly Return only definitions to show in preferences.
              * @return {String[]}
              */
             getDefs: getDefs
