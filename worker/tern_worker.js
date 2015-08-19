@@ -53,7 +53,7 @@ function mix() {
     return child;
 }
 
-    
+
 handler.handlesLanguage = function(language) {
     // Note that we don't really support jsx here,
     // but rather tolerate it using error recovery...
@@ -82,19 +82,19 @@ handler.init = function(callback) {
             // TODO we can use file cache in navigate to find a folder for unresolved modules
             if (file[0] != "/")
                 file = "/" + file;
-                
+
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
                     err = new Error("File is too large to include");
                     err.code = "ESIZE";
                 }
-                
+
                 if (err)
                     return done(err);
 
                 fileCache[file] = fileCache[file] || {};
                 fileCache[file].mtime = stat.mtime;
-        
+
                 util.readFile(file, { allowUnsaved: true }, function(err, data) {
                     if (err) return done(err);
 
@@ -114,28 +114,28 @@ handler.init = function(callback) {
         }
     });
     inferCompleter.setExtraModules(ternWorker.cx.definitions.node);
-    
+
     ternWorker.on("beforeLoad", function(e) {
         var file = e.name;
         var dir = dirname(e.name);
-        
+
         if (dir[0] != "/")
             return;
-        
+
         if (!dirCache[dir])
             util.$watchDir(dir, handler);
-        
+
         fileCache[file] = fileCache[file] || {};
         dirCache[dir] = dirCache[dir] || {};
         dirCache[dir].used = Date.now();
         dirCache[dir][file] = true;
         lastCacheRead = Date.now();
     });
-    
+
     handler.sender.on("tern_set_def_enabled", function(e) {
         setDefEnabled(e.data.name, e.data.def, e.data.enabled);
     });
-    
+
     handler.sender.on("tern_set_server_options", function(e) {
         var target = ternWorker.options || ternServerOptions;
         var prop;
@@ -160,7 +160,7 @@ handler.init = function(callback) {
     });
 
     handler.sender.on("tern_get_plugins", function(e) {
-        var pluginName
+        var pluginName;
         var plugins = [];
         var pluginToList;
         for (pluginName in ternWorker.options.plugins) {
@@ -206,7 +206,7 @@ handler.init = function(callback) {
             ternWorker.reset();
         }
     });
-    
+
     util.$onWatchDirChange(onWatchDirChange);
     setInterval(garbageCollect, 60000);
     callback();
@@ -226,7 +226,7 @@ function onWatchDirChange(e) {
 
 function garbageCollect() {
     var minAge = lastCacheRead - MAX_CACHE_AGE;
-    
+
     for (var file in fileCache) {
         if (fileCache[file].used < minAge) {
             ternWorker.delFile(file);
@@ -235,7 +235,7 @@ function garbageCollect() {
                 lastAddPath = null;
         }
     }
-    
+
     for (var dir in dirCache) {
         if (dirCache[dir].used < minAge) {
             handler.sender.emit("unwatchDir", { path: dir });
@@ -276,7 +276,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         return callback();
 
     addTernFile(this.path, doc.getValue());
-    
+
     var line = doc.getLine(pos.row);
     var prefix = util.getPrecedingIdentifier(line, pos.column);
     var defaultOptions = {
@@ -319,7 +319,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 match.name = match.name.replace(/"(.*)"/, "$1");
                 icon = "package";
             }
-                        
+
             var isFunction = match.type && match.type.match(/^fn\(/);
             var isAnonymous = match.type && match.type.match(/^{/);
             var fullName;
@@ -353,7 +353,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 isContextual: isContextual,
                 docHead: fullNameTyped,
                 doc: (match.origin && isFromLibrary ? "Origin: " + match.origin + "<p>" : "") + doc,
-                isFunction: isFunction
+                isFunction: isFunction,
+                url: match.url
             };
         }).filter(function(c) {
             return c;
@@ -458,15 +459,15 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
     if (!currentNode)
         return callback();
     var argIndex = -1;
-    
+
     var callNode = getCallNode(currentNode, cursorPos);
     var displayPos;
-    
+
     if (callNode) {
-        var argPos = { row: callNode[1].getPos().sl, column: callNode[1].getPos().sc }; 
+        var argPos = { row: callNode[1].getPos().sl, column: callNode[1].getPos().sc };
         if (argPos.row >= 9999999999)
             argPos = cursorPos;
-      
+
         displayPos = argPos;
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
@@ -480,7 +481,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
     else {
         return callback();
     }
-    
+
     if (argIndex === -1 && callNode)
         return callback();
 
@@ -699,7 +700,7 @@ function getSignature(property) {
         if (p.type)
             p.type = p.type.replace(/.*\./, "");
     });
-    
+
 
     if (parameters[0].name === "")
         parameters.shift();
