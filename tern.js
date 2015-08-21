@@ -41,7 +41,6 @@ define(function(require, exports, module) {
             
             var ternOptions = options.tern || {
                 plugins: {
-                    doc_comment: "tern/plugin/doc_comment",
                     // UNDONE: doesn't normally exist; should be added by config
                     // smartface: "plugins/smartface/loadInclude.js",
                     angular: "tern/plugin/angular",
@@ -88,7 +87,7 @@ define(function(require, exports, module) {
             });
 
 
-            var defsToAdd = []
+            var defsToAdd = [];
             var defIndex;
             var d;
             for (defIndex in ternOptions.defs) {
@@ -135,7 +134,6 @@ define(function(require, exports, module) {
         }
         
         function getTernDefNames(callback) {
-            if(typeof callback !== "function") {return;}
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 worker.on("tern_read_def_names", function tern_read_def_names (e){
@@ -154,27 +152,26 @@ define(function(require, exports, module) {
         }
         
         function ternPlugins(callback) {
-            if(typeof callback !== "function") {return;}
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
-                worker.on("tern_read_plugins", function tern_read_plugins (e){
+                worker.on("tern_read_plugins", function tern_read_plugins(e) {
                     var backupPluginStatus;
                     worker.off(tern_read_plugins);
                     backupPluginStatus = JSON.stringify(e.data);
                     callback(e.data);
-                    if(JSON.stringify(e.data) != backupPluginStatus) {
-                        //state of plugins have changed, update ternWorker
-                        worker.emit("tern_update_plugins", {data: e.data});
+                    if (JSON.stringify(e.data) != backupPluginStatus) {
+                        // state of plugins have changed, update ternWorker
+                        worker.emit("tern_update_plugins", { data: e.data });
                     }
                 });
-                worker.emit("tern_get_plugins", { data: null});
+                worker.emit("tern_get_plugins", { data: null });
             });
         }
         
         function setTernRequestOptions(ternRequestOptions) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
-                worker.emit("tern_set_request_options", { data:ternRequestOptions});
+                worker.emit("tern_set_request_options", { data:ternRequestOptions });
             });
 
         }
@@ -236,9 +233,11 @@ define(function(require, exports, module) {
              
              /**
               * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones
+              * 
+              * @ignore TODO: should be named getPlugins()
               * @param {ternPluginsCallback} callback required function to process status of plugins
               */
-             ternPlugins: ternPlugins,
+            ternPlugins: ternPlugins,
             
             /**
              * Sets tern request options
