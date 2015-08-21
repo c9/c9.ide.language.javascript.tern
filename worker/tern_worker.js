@@ -181,37 +181,7 @@ handler.init = function(callback) {
     });
 
     handler.sender.on("tern_update_plugins", function(e) {
-        var updatedPluginConfig = e.data;
-        var targetPluginInfo;
-        var requiresReset = false;
-        var pluginToWorkWith;
-        var targetPluginInfoIndex;
-        var pluginExecResult;
-        for (targetPluginInfoIndex in updatedPluginConfig) {
-            targetPluginInfo = updatedPluginConfig[targetPluginInfoIndex];
-            pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
-            if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
-                // Register new plugin
-                pluginExecResult = require(targetPluginInfo.path);
-                pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
-
-                // Add special condition for architectResolver
-                if (targetPluginInfo.name === "architect_resolver") {
-                    architectResolver = pluginExecResult;
-                }
-                requiresReset = true;
-            }
-            else {
-                if (pluginToWorkWith !== targetPluginInfo.enabled) {
-                    // Check for changed status
-                    pluginToWorkWith = targetPluginInfo.enabled;
-                    requiresReset = true;
-                }
-            }
-        }
-        if (requiresReset) {
-            ternWorker.reset();
-        }
+        updatePlugins(e.data);
     });
 
     util.$onWatchDirChange(onWatchDirChange);
@@ -219,6 +189,40 @@ handler.init = function(callback) {
     callback();
 };
 
+var updatePlugins = module.exports.updatePlugins = function(plugins) {
+    var targetPluginInfo;
+    var requiresReset = false;
+    var pluginToWorkWith;
+    var targetPluginInfoIndex;
+    var pluginExecResult;
+    for (targetPluginInfoIndex in plugins) {
+        targetPluginInfo = plugins[targetPluginInfoIndex];
+        pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
+        if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
+            // Register new plugin
+            pluginExecResult = require(targetPluginInfo.path);
+            pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
+
+            // Add special condition for architectResolver
+            if (targetPluginInfo.name === "architect_resolver") {
+                architectResolver = pluginExecResult;
+            }
+            requiresReset = true;
+        }
+        else {
+            if (pluginToWorkWith !== targetPluginInfo.enabled) {
+                // Check for changed status
+                pluginToWorkWith = targetPluginInfo.enabled;
+                requiresReset = true;
+            }
+        }
+    }
+    if (requiresReset) {
+        ternWorker.reset();
+    }
+};
+
+>>>>>>> c16fdf8... Expose tern_update_plugins as a function
 function onWatchDirChange(e) {
     var dir = e.data.path.replace(/\/?$/, "/");
     e.data.files.forEach(function(stat) {
