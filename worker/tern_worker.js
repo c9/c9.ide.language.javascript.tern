@@ -177,18 +177,18 @@ handler.init = function(callback) {
         var updatedPluginConfig = e.data;
         var targetPluginInfo;
         var requiresReset = false;
-        var pluginToWorkWith
+        var pluginToWorkWith;
         var targetPluginInfoIndex;
         var pluginExecResult;
         for (targetPluginInfoIndex in updatedPluginConfig) {
             targetPluginInfo = updatedPluginConfig[targetPluginInfoIndex];
             pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
             if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
-                //register new plugin
+                // Register new plugin
                 pluginExecResult = require(targetPluginInfo.path);
                 pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = TERN_PLUGINS[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
 
-                //add special condition for architectResolver
+                // Add special condition for architectResolver
                 if (targetPluginInfo.name === "architect_resolver") {
                     architectResolver = pluginExecResult;
                 }
@@ -196,7 +196,7 @@ handler.init = function(callback) {
             }
             else {
                 if (pluginToWorkWith !== targetPluginInfo.enabled) {
-                    //check for changed status
+                    // Check for changed status
                     pluginToWorkWith = TERN_PLUGINS[targetPluginInfo.name] = targetPluginInfo.enabled;
                     requiresReset = true;
                 }
