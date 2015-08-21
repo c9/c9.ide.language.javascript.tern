@@ -14,13 +14,20 @@ var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_com
 // TODO: async fetch?
 var TERN_DEFS = [];
 
-var TERN_PLUGINS = {
-    // TODO: only include meteor completions if project has a .meteor folder,
-    //       or if we find 1 or more meteor globals anywhere
-    // TODO: maybe enable this meteor plugin again?
-    // meteor: require("./lib/tern-meteor/meteor") && true,
-    // TODO: use https://github.com/borisyankov/DefinitelyTyped
-    // TODO: move the mentioned tern-plugin definitions to c9-plugin/tern
+// TODO: only include meteor completions if project has a .meteor folder,
+//       or if we find 1 or more meteor globals anywhere
+// TODO: maybe enable this meteor plugin again?
+// meteor: require("./lib/tern-meteor/meteor") && true,
+// TODO: use https://github.com/borisyankov/DefinitelyTyped
+
+// Listing these plugins here makes sure they're part of the build process
+var BUILTIN_PLUGINS = {
+    angular: require("tern/plugin/angular"),
+    component: require("tern/plugin/component"),
+    doc_comment: require("tern/plugin/doc_comment"),
+    node: require("tern/plugin/node"),
+    requirejs: require("tern/plugin/requirejs"),
+    architect_resolver: architectResolver,
 };
 
 var ternWorker;
@@ -71,12 +78,12 @@ handler.getMaxFileSizeSupported = function() {
 
 handler.init = function(callback) {
     ternWorker = new tern.Server({
-        async: typeof ternServerOptions.async !== "undefined"? ternServerOptions.async : true,
-        defs: typeof ternServerOptions.defs !== "undefined"? ternServerOptions.defs : TERN_DEFS,
-        plugins: typeof ternServerOptions.plugins !== "undefined"? ternServerOptions.plugins : TERN_PLUGINS,
-        dependencyBudget: typeof ternServerOptions.dependencyBudget !== "undefined"? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
-        reuseInstances: typeof ternServerOptions.reuseInstances !== "undefined"? ternServerOptions.reuseInstances : true,
-        getFile: typeof ternServerOptions.getFile !== "undefined"? ternServerOptions.getFile : function(file, callback) {
+        async: ternServerOptions.async !== undefined ? ternServerOptions.async : true,
+        defs: ternServerOptions.defs !== undefined ? ternServerOptions.defs : TERN_DEFS,
+        plugins: ternServerOptions.plugins !== undefined ? ternServerOptions.plugins : {},
+        dependencyBudget: ternServerOptions.dependencyBudget !== undefined ? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
+        reuseInstances: ternServerOptions.reuseInstances !== undefined ? ternServerOptions.reuseInstances : true,
+        getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
             if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
                 file += ".js";
             // TODO we can use file cache in navigate to find a folder for unresolved modules
@@ -186,7 +193,7 @@ handler.init = function(callback) {
             if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
                 // Register new plugin
                 pluginExecResult = require(targetPluginInfo.path);
-                pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = TERN_PLUGINS[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
+                pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
 
                 // Add special condition for architectResolver
                 if (targetPluginInfo.name === "architect_resolver") {
@@ -197,7 +204,7 @@ handler.init = function(callback) {
             else {
                 if (pluginToWorkWith !== targetPluginInfo.enabled) {
                     // Check for changed status
-                    pluginToWorkWith = TERN_PLUGINS[targetPluginInfo.name] = targetPluginInfo.enabled;
+                    pluginToWorkWith = targetPluginInfo.enabled;
                     requiresReset = true;
                 }
             }
