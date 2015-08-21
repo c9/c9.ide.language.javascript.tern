@@ -222,7 +222,6 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
     }
 };
 
->>>>>>> c16fdf8... Expose tern_update_plugins as a function
 function onWatchDirChange(e) {
     var dir = e.data.path.replace(/\/?$/, "/");
     e.data.files.forEach(function(stat) {
