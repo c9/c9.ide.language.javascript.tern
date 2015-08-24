@@ -196,17 +196,13 @@ var setOptions = module.exports.setOptions = function(options) {
 };
 
 var updatePlugins = module.exports.updatePlugins = function(plugins) {
-    var targetPluginInfo;
     var requiresReset = false;
-    var pluginToWorkWith;
-    var targetPluginInfoIndex;
-    var pluginExecResult;
-    for (targetPluginInfoIndex in plugins) {
-        targetPluginInfo = plugins[targetPluginInfoIndex];
-        pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
+    for (var targetPluginInfoIndex in plugins) {
+        var targetPluginInfo = plugins[targetPluginInfoIndex];
+        var pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
         if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
             // Register new plugin
-            pluginExecResult = require(targetPluginInfo.path);
+            var pluginExecResult = require(targetPluginInfo.path);
             pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
 
             // Add special condition for architectResolver
