@@ -270,7 +270,10 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     };
     addTernFile(this.path, value);
 
-    architectResolver && architectResolver.onReady(function() {
+    if (!architectResolver)
+        return callback();
+
+    architectResolver.onReady(function() {
         handler.$flush(function(err) {
             if (err) console.error(err.stack || err);
             callback();
