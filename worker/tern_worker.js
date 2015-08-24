@@ -77,49 +77,7 @@ handler.getMaxFileSizeSupported = function() {
 };
 
 handler.init = function(callback) {
-    ternWorker = new tern.Server({
-        async: ternServerOptions.async !== undefined ? ternServerOptions.async : true,
-        defs: ternServerOptions.defs !== undefined ? ternServerOptions.defs : TERN_DEFS,
-        plugins: ternServerOptions.plugins !== undefined ? ternServerOptions.plugins : {},
-        dependencyBudget: ternServerOptions.dependencyBudget !== undefined ? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
-        reuseInstances: ternServerOptions.reuseInstances !== undefined ? ternServerOptions.reuseInstances : true,
-        getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
-            if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
-                file += ".js";
-            // TODO we can use file cache in navigate to find a folder for unresolved modules
-            if (file[0] != "/")
-                file = "/" + file;
-
-            util.stat(file, function(err, stat) {
-                if (stat && stat.size > MAX_FILE_SIZE) {
-                    err = new Error("File is too large to include");
-                    err.code = "ESIZE";
-                }
-
-                if (err)
-                    return done(err);
-
-                fileCache[file] = fileCache[file] || {};
-                fileCache[file].mtime = stat.mtime;
-
-                util.readFile(file, { allowUnsaved: true }, function(err, data) {
-                    if (err) return done(err);
-
-                    lastAddPath = null; // invalidate cache
-                    done(null, data);
-                });
-            });
-
-            function done(err, result) {
-                try {
-                    callback(err, result);
-                }
-                catch (err) {
-                    console.error(err.stack);
-                }
-            }
-        }
-    });
+    initTern();
     inferCompleter.setExtraModules(ternWorker.cx.definitions.node);
 
     ternWorker.on("beforeLoad", function(e) {
@@ -184,6 +142,52 @@ handler.init = function(callback) {
     setInterval(garbageCollect, 60000);
     callback();
 };
+
+function initTern() {
+    ternWorker = new tern.Server({
+        async: ternServerOptions.async !== undefined ? ternServerOptions.async : true,
+        defs: ternServerOptions.defs !== undefined ? ternServerOptions.defs : TERN_DEFS,
+        plugins: ternServerOptions.plugins !== undefined ? ternServerOptions.plugins : {},
+        dependencyBudget: ternServerOptions.dependencyBudget !== undefined ? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
+        reuseInstances: ternServerOptions.reuseInstances !== undefined ? ternServerOptions.reuseInstances : true,
+        getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
+            if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
+                file += ".js";
+            // TODO we can use file cache in navigate to find a folder for unresolved modules
+            if (file[0] != "/")
+                file = "/" + file;
+
+            util.stat(file, function(err, stat) {
+                if (stat && stat.size > MAX_FILE_SIZE) {
+                    err = new Error("File is too large to include");
+                    err.code = "ESIZE";
+                }
+
+                if (err)
+                    return done(err);
+
+                fileCache[file] = fileCache[file] || {};
+                fileCache[file].mtime = stat.mtime;
+
+                util.readFile(file, { allowUnsaved: true }, function(err, data) {
+                    if (err) return done(err);
+
+                    lastAddPath = null; // invalidate cache
+                    done(null, data);
+                });
+            });
+
+            function done(err, result) {
+                try {
+                    callback(err, result);
+                }
+                catch (err) {
+                    console.error(err.stack);
+                }
+            }
+        }
+    });
+}
 
 var setOptions = module.exports.setOptions = function(options) {
     for (var o in options) {
