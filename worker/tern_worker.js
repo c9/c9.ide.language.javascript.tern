@@ -144,11 +144,7 @@ handler.init = function(callback) {
     });
 
     handler.sender.on("tern_set_server_options", function(e) {
-        var target = ternWorker.options || ternServerOptions;
-        var prop;
-        for (prop in e.data) {
-            target[prop] = e.data[prop];
-        }
+        setOptions(e.data);
     });
 
     handler.sender.on("tern_get_def_names", function(e) {
@@ -187,6 +183,12 @@ handler.init = function(callback) {
     util.$onWatchDirChange(onWatchDirChange);
     setInterval(garbageCollect, 60000);
     callback();
+};
+
+var setOptions = module.exports.setOptions = function(options) {
+    for (var o in options) {
+        ternWorker.options[o] = ternServerOptions[o] = options[o];
+    }
 };
 
 var updatePlugins = module.exports.updatePlugins = function(plugins) {
