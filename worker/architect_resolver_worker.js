@@ -26,7 +26,7 @@ handler.handlesLanguage = function(language) {
     return language === "javascript" || language === "jsx";
 };
 
-handler.onReady = function(callback) {
+handler.onceReady = function(callback) {
     if (ready)
         return callback();
     

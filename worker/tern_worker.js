@@ -224,7 +224,7 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
             ternServerOptions.plugins[targetPluginInfo.name] = targetPluginInfo.enabled;
 
             if (targetPluginInfo.name === "architect_resolver")
-                architectResolver = true;
+                architectResolver = loaded;
 
             requiresReset = true;
         }
@@ -288,7 +288,7 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     };
     addTernFile(this.path, value);
 
-    architectResolver && architectResolver.onReady(function() {
+    architectResolver && architectResolver.onceReady(function() {
         handler.$flush(function(err) {
             if (err) console.error(err.stack || err);
             callback();
