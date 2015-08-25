@@ -195,6 +195,18 @@ var setOptions = module.exports.setOptions = function(options) {
     }
 };
 
+/**
+ * Example:
+ * 
+ * ```
+ * updatePlugins({
+ *      lightning: {
+ *          name: "lightning",
+ *          enabled: true
+ *      }
+ * });
+ * ```
+ */
 var updatePlugins = module.exports.updatePlugins = function(plugins) {
     var requiresReset = false;
     for (var targetPluginInfoIndex in plugins) {
@@ -202,26 +214,30 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
         var pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
         if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
             // Register new plugin
-            var pluginExecResult = require(targetPluginInfo.path);
-            pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name] = pluginExecResult && targetPluginInfo.enabled;
-
-            // Add special condition for architectResolver
-            if (targetPluginInfo.name === "architect_resolver") {
-                architectResolver = pluginExecResult;
+            var loaded = require(targetPluginInfo.path);
+            if (!loaded) {
+                console.error("Could not load", targetPluginInfo.path);
+                continue;
             }
+            
+            ternServerOptions.plugins = ternServerOptions.plugins || {};
+            ternServerOptions.plugins[targetPluginInfo.name] = targetPluginInfo.enabled;
+
+            if (targetPluginInfo.name === "architect_resolver")
+                architectResolver = true;
+
             requiresReset = true;
         }
         else {
             if (pluginToWorkWith !== targetPluginInfo.enabled) {
-                // Check for changed status
-                pluginToWorkWith = targetPluginInfo.enabled;
+                ternServerOptions.plugins = ternServerOptions.plugins || {};
+                ternServerOptions.plugins[targetPluginInfo.name] = targetPluginInfo.enabled;
                 requiresReset = true;
             }
         }
     }
-    if (requiresReset) {
-        ternWorker.reset();
-    }
+    if (requiresReset)
+        initTern();
 };
 
 function onWatchDirChange(e) {
