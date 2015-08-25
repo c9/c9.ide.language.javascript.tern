@@ -12,6 +12,6 @@ $NEWCLIENT_DIR/node_modules/tern/bin/condense \
   --plugin doc_comment \
   --plugin requirejs \
   --plugin component \
-  --plugin $PLUGIN_DIR/cli/path_fixer.js \
-  --plugin $PLUGIN_DIR/worker/architect_resolver_plugin.js \
+  --plugin $PLUGIN_DIR/util/path_fixer.js \
+  --plugin $PLUGIN_DIR/worker/architect_resolver_tern_plugin.js \
    "$@"
