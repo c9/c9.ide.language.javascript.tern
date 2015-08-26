@@ -732,7 +732,7 @@ function getSignature(property) {
         if (p.type === "[]")
             p.type = "Array";
         if (p.type)
-            p.type = p.type.replace(/.*\./, "");
+            p.type = p.type.replace(/\.prototype$/, "").replace(/.*\./, "");
     });
 
 
@@ -741,7 +741,7 @@ function getSignature(property) {
 
     return {
         parameters: parameters,
-        returnType: returnType && returnType.replace(/.*\./, "")
+        returnType: returnType && returnType.replace(/\.prototype$/, "").replace(/.*\./, "")
     };
 }
 
