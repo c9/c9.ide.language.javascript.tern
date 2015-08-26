@@ -796,6 +796,7 @@ function setDefEnabled(name, def, enabled) {
             return d["!name"] !== name;
         });
         ternWorker.reset();
+        ternServerOptions.defs = ternWorker.defs;
         return;
     }
 
@@ -810,6 +811,7 @@ function setDefEnabled(name, def, enabled) {
 
         ternWorker.defs.push(def[i]);
     }
+    ternServerOptions.defs = ternWorker.defs;
     ternWorker.reset();
 }
 
