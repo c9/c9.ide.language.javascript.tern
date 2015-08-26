@@ -202,7 +202,7 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                     // tab.close() isn't quite synchronous, wait for it :(
                     complete.closeCompletionBox();
                     setTimeout(function() {
-                        tabs.openFile("/plugins/c9.dummy/architect_test.js", function(err, tab) {
+                        tabs.openFile("/plugins/c9.dummy/architect_test_dummy.js", function(err, tab) {
                             jsTab = tab;
                             jsSession = jsTab.document.getSession().session;
                             expect(jsSession).to.not.equal(null);
