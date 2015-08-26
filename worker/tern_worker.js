@@ -291,7 +291,7 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     if (!architectResolver)
         return callback();
 
-    architectResolver && architectResolver.onceReady(function() {
+    architectResolver.onceReady(function() {
         handler.$flush(function(err) {
             if (err) console.error(err.stack || err);
             callback();
