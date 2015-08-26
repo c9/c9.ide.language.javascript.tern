@@ -35,6 +35,7 @@ var ternServerOptions = {};
 var ternRequestOptions = {};
 var fileCache = {};
 var dirCache = {};
+var firstClassDefs = [];
 var lastAddPath;
 var lastAddValue;
 var lastCacheRead = 0;
@@ -209,29 +210,31 @@ var setOptions = module.exports.setOptions = function(options) {
  */
 var updatePlugins = module.exports.updatePlugins = function(plugins) {
     var requiresReset = false;
-    for (var targetPluginInfoIndex in plugins) {
-        var targetPluginInfo = plugins[targetPluginInfoIndex];
-        var pluginToWorkWith = ternWorker.options.plugins[targetPluginInfo.name];
-        if (typeof pluginToWorkWith === "undefined" && typeof targetPluginInfo.path === "string") {
+    for (var p in plugins) {
+        var targetPlugin = plugins[p];
+        var plugin = ternWorker.options.plugins[targetPlugin.name];
+        if (targetPlugin.firstClass)
+            firstClassDefs.push(targetPlugin.name);
+        if (typeof plugin === "undefined" && typeof targetPlugin.path === "string") {
             // Register new plugin
-            var loaded = require(targetPluginInfo.path);
+            var loaded = require(targetPlugin.path);
             if (!loaded) {
-                console.error("Could not load", targetPluginInfo.path);
+                console.error("Could not load", targetPlugin.path);
                 continue;
             }
             
             ternServerOptions.plugins = ternServerOptions.plugins || {};
-            ternServerOptions.plugins[targetPluginInfo.name] = targetPluginInfo.enabled;
+            ternServerOptions.plugins[targetPlugin.name] = targetPlugin.enabled;
 
-            if (targetPluginInfo.name === "architect_resolver")
+            if (targetPlugin.name === "architect_resolver")
                 architectResolver = loaded;
 
             requiresReset = true;
         }
         else {
-            if (pluginToWorkWith !== targetPluginInfo.enabled) {
+            if (plugin !== targetPlugin.enabled) {
                 ternServerOptions.plugins = ternServerOptions.plugins || {};
-                ternServerOptions.plugins[targetPluginInfo.name] = targetPluginInfo.enabled;
+                ternServerOptions.plugins[targetPlugin.name] = targetPlugin.enabled;
                 requiresReset = true;
             }
         }
@@ -339,7 +342,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             if (!isContextual && match.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
 
-            var isFromLibrary = match.origin && match.origin[0] !== "/";
+            var isFromLibrary = match.origin && match.origin[0] !== "/" && firstClassDefs.indexOf(match.origin) === -1;
             var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
             var icon = getIcon(match, priority);
 
@@ -789,7 +792,17 @@ handler.$flush = function(callback) {
     }
 };
 
-function setDefEnabled(name, def, enabled) {
+/**
+ * @param {String} name
+ * @param {Object} def
+ * @param {Boolean} enabled
+ * @param {Boolean} firstClass   Treat as if these were built-in types,
+                       *         showing nicer icons and hiding the library name.
+ */
+function setDefEnabled(name, def, enabled, firstClass) {
+    if (firstClass)
+        firstClassDefs.push(name);
+    
     var i;
     if (!enabled) {
         ternWorker.defs = ternWorker.defs.filter(function(d) {
