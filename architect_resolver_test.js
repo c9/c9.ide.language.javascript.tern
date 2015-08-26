@@ -2,6 +2,7 @@
 
 "use client";
 
+
 require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/complete_util", "assert"], function (architect, chai, util, complete) {
     var expect = chai.expect;
     var assert = require("assert");
