@@ -387,6 +387,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 isContextual: isContextual,
                 docHead: fullNameTyped,
                 doc: (match.origin && isFromLibrary ? "Origin: " + match.origin + "<p>" : "") + doc,
+                docUrl: match.url,
                 isFunction: isFunction,
                 url: match.url
             };
