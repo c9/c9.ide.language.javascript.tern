@@ -306,7 +306,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     // Don't show completions for definitions
     if (!currentNode ||
         ["FArg", "Function", "Arrow", "VarDecl", "VarDeclInit", "ConstDecl", "ConstDeclInit",
-        "LetDecl", "LetDeclInit", "PropertyInit", "Label"].indexOf(currentNode.cons) > -1)
+        "LetDecl", "LetDeclInit", "PropertyInit", "Label", "String"].indexOf(currentNode.cons) > -1)
         return callback();
 
     addTernFile(this.path, doc.getValue());
