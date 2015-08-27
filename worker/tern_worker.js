@@ -553,7 +553,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
             if (p.type === "?")
                 delete p.type;
             if (parameterDocs["_" + p.name])
-                p.doc = parameterDocs["_" + p.name];
+                p.docHtml = parameterDocs["_" + p.name];
         });
         if (sig.returnType === "?")
             delete sig.returnType;
@@ -564,7 +564,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
             hint: {
                 signatures: [{
                     name: result.name.replace(/.*\./, ""),
-                    doc: result.doc && result.doc.replace(/^\* /g, ""),
+                    docHtml: result.doc && result.doc.replace(/^\* /g, ""),
                     parameters: sig.parameters,
                     returnType: sig.returnType
                 }],
