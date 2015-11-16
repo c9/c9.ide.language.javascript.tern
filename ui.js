@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
     main.consumes = [
-        "Plugin", "prefs"
+        "Plugin", "preferences"
     ];
     main.provides = ["language.tern.ui"];
     return main;
@@ -9,7 +9,7 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         
         var plugin = new Plugin("Ajax.org", main.consumes);
-        var prefs = imports.prefs;
+        var prefs = imports.preferences;
         
         var loaded = false;
         function load() {
