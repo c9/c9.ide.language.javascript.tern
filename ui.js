@@ -17,18 +17,17 @@ define(function(require, exports, module) {
             loaded = true;
             
             prefs.add({
-                "Language" : {
-                    position: 500,
-                    "Tern" : {
-                        position: 100,
+                "Project": {
+                    "JavaScript" : {
+                        position: 700,
                         "Tern Completions" : {
                             type: "checkbox",
-                            path: "user/language/@continuousCompletion",
+                            path: "project/language/@continuousCompletion",
                             position: 4000
                         },
                     }
                 }
-            });
+            }, plugin);
         }
         
         plugin.on("load", load);
