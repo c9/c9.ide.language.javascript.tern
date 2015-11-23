@@ -5,7 +5,6 @@ var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
 var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
-var asyncForEach = require("plugins/c9.ide.language/worker").asyncForEach;
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 var getParameterDocs = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").getParameterDocs;
@@ -815,36 +814,32 @@ function setDefEnabled(name, def, enabled, firstClass) {
     }
 
     var defs = def instanceof Array ? def : [def];
-    asyncForEach(
-        defs,
-        function(def, next) {
-            if (typeof def !== "string") {
-                ternWorker.defs.push(def[i]);
-                return next();
-            }
-            
-            completeUtil.fetchText(def, function(err, result) {
-                if (err) console.error(err);
-                try {
-                    result = JSON.parse(result);
-                }
-                catch (err) {
-                    console.error(err);
-                    result = null;
-                }
-    
-                ternWorker.defs.push(result);
-                next();
-            });
-        },
-        function done() {
-            ternServerOptions.defs = ternWorker.defs;
-            ternWorker.reset();
+    var downloaded = 0;
+    defs.forEach(function(def) {
+        if (typeof def !== "string") {
+            ternWorker.defs.push(def[i]);
+            return checkDone();
         }
-    );
-    
-    for (i = 0; i < def.length; i++) {
-        
+            
+        completeUtil.fetchText(def, function(err, result) {
+            if (err) console.error(err);
+            try {
+                result = JSON.parse(result);
+            }
+            catch (err) {
+                console.error(err);
+                result = null;
+            }
+
+            ternWorker.defs.push(result);
+            checkDone();
+        });
+    });
+    function checkDone() {
+        if (++downloaded < defs.length)
+            return;
+        ternServerOptions.defs = ternWorker.defs;
+        ternWorker.reset();
     }
 }
 
