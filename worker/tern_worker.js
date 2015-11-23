@@ -5,13 +5,13 @@ var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
 var handler = module.exports = Object.create(baseLanguageHandler);
 var tree = require("treehugger/tree");
 var util = require("plugins/c9.ide.language/worker_util");
+var asyncForEach = require("plugins/c9.ide.language/worker").asyncForEach;
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var filterDocumentation = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").filterDocumentation;
 var getParameterDocs = require("plugins/c9.ide.language.jsonalyzer/worker/ctags/ctags_util").getParameterDocs;
 var architectResolver = null;
 var inferCompleter = require("plugins/c9.ide.language.javascript.infer/infer_completer");
 
-// TODO: async fetch?
 var TERN_DEFS = [];
 
 // TODO: only include meteor completions if project has a .meteor folder,
@@ -814,19 +814,38 @@ function setDefEnabled(name, def, enabled, firstClass) {
         return;
     }
 
-    if (!(def instanceof Array)) {
-        def = [def];
-    }
-    for (i = 0; i < def.length; i++) {
-        if (typeof def[i] == "string") {
-            // TODO: async fetch
-            def[i] = JSON.parse(completeUtil.fetchText(def[i]));
+    var defs = def instanceof Array ? def : [def];
+    asyncForEach(
+        defs,
+        function(def, next) {
+            if (typeof def !== "string") {
+                ternWorker.defs.push(def[i]);
+                return next();
+            }
+            
+            completeUtil.fetchText(def, function(err, result) {
+                if (err) console.error(err);
+                try {
+                    result = JSON.parse(result);
+                }
+                catch (err) {
+                    console.error(err);
+                    result = null;
+                }
+    
+                ternWorker.defs.push(result);
+                next();
+            });
+        },
+        function done() {
+            ternServerOptions.defs = ternWorker.defs;
+            ternWorker.reset();
         }
-
-        ternWorker.defs.push(def[i]);
+    );
+    
+    for (i = 0; i < def.length; i++) {
+        
     }
-    ternServerOptions.defs = ternWorker.defs;
-    ternWorker.reset();
 }
 
 function setJSXMode(path) {
