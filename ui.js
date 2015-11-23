@@ -11,6 +11,7 @@ define(function(require, exports, module) {
         var ui = imports.ui;
         var Datagrid = imports.Datagrid;
         var plugin = new Plugin("Ajax.org", main.consumes);
+        var builtins = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
         
         var datagrid;
         
@@ -46,27 +47,36 @@ define(function(require, exports, module) {
                 emptyMessage: "Loading...",
                 minLines: 3,
                 maxLines: 10,
+                sort: function(array) {
+                    return array.sort(function compare(a, b) {
+                        return a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1;
+                    });
+                },
                 columns : [
                     {
                         caption: "Name",
                         value: "name",
-                        width: "35%",
+                        width: "100%",
                         type: "tree"
                     }, 
-                    {
-                        caption: "Description",
-                        value: "description",
-                        width: "65%",
-                    }
+                    // {
+                    //     caption: "Description",
+                    //     value: "description",
+                    //     width: "65%",
+                    // }
                 ],
             }, plugin);
             datagrid.once("draw", function() {
                 datagrid.on("check", onChange.bind(null, true));
                 datagrid.on("uncheck", onChange.bind(null, false));
-                datagrid.setRoot([
-                    { label: "Test1", description: "Test 1 desc" },
-                    { label: "Test2", description: "Test 2 desc" },
-                ]);
+                datagrid.setRoot(Object.keys(builtins).map(function(b) {
+                    return {
+                        label: b,
+                        description: '<a href="' + builtins[b].url + '">' + builtins[b].url + '</a>',
+                        main: builtins[b].main,
+                        extra: builtins[b].extra,
+                    };
+                }));
             });
         }
         
