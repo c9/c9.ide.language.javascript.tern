@@ -15,6 +15,24 @@ define(function(require, exports, module) {
         
         var datagrid;
         
+        
+        //
+            // disabled until there is a support for async loading
+            /*
+            var builtinSigs;
+            try {
+                builtinSigs = JSON.parse(builtins).sigs;
+            }
+            catch (e) {
+                if (e) return console.error(e);
+            }
+
+            for (var sig in builtinSigs) {
+                registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
+                // TODO: register "extra" defs?
+            }
+            */
+        
         var loaded = false;
         function load() {
             if (loaded) return;
