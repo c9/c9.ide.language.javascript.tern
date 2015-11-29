@@ -85,6 +85,7 @@ define(function(require, exports, module) {
                 ],
             }, plugin);
             datagrid.once("draw", function() {
+                var builtins = tern.getDefs(true);
                 datagrid.on("check", onChange.bind(null, true));
                 datagrid.on("uncheck", onChange.bind(null, false));
                 datagrid.setRoot(Object.keys(builtins).map(function(b) {
@@ -99,8 +100,7 @@ define(function(require, exports, module) {
         }
         
         function onChange(node) {
-            node.isChecked;
-            node.label;
+            tern.setDefEnabled(node.label, node.isChecked);
         }
         
         plugin.on("load", load);

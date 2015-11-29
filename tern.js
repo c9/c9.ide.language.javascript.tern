@@ -9,6 +9,7 @@ define(function(require, exports, module) {
     function main(options, imports, register) {
         var Plugin = imports.Plugin;
         var language = imports.language;
+        var builtinSigs = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
         
         var plugin = new Plugin("Ajax.org", main.consumes);
         
@@ -21,7 +22,11 @@ define(function(require, exports, module) {
             loaded = true;
             
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
-            
+
+            for (var sig in builtinSigs) {
+                registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
+                // TODO: register "extra" defs?
+            }
             
             var ternOptions = options.tern || {
                 plugins: {
@@ -70,7 +75,6 @@ define(function(require, exports, module) {
                 }
             });
 
-
             var defsToAdd = [];
             var defIndex;
             var d;
@@ -91,7 +95,7 @@ define(function(require, exports, module) {
                     }
                 });
             });
-            }
+        }
                     
         function registerDef(name, def, enable, hide) {
             defs[name] = def;
