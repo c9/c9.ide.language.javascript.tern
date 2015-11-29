@@ -1,6 +1,6 @@
 define(function(require, exports, module) {
     main.consumes = [
-        "Plugin", "preferences", "ui", "Datagrid"
+        "Plugin", "preferences", "ui", "Datagrid", "preferences.experimental", "language.tern"
     ];
     main.provides = ["language.tern.ui"];
     return main;
@@ -10,33 +10,19 @@ define(function(require, exports, module) {
         var prefs = imports.preferences;
         var ui = imports.ui;
         var Datagrid = imports.Datagrid;
+        var tern = imports["language.tern"];
         var plugin = new Plugin("Ajax.org", main.consumes);
-        var builtins = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
+        var experimental = imports["preferences.experimental"];
         
+        var ENABLED = experimental.addExperiment("libraries", false, "Language/JavaScript Library Completions in Project Settings");
         var datagrid;
-        
-        
-        //
-            // disabled until there is a support for async loading
-            /*
-            var builtinSigs;
-            try {
-                builtinSigs = JSON.parse(builtins).sigs;
-            }
-            catch (e) {
-                if (e) return console.error(e);
-            }
-
-            for (var sig in builtinSigs) {
-                registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
-                // TODO: register "extra" defs?
-            }
-            */
         
         var loaded = false;
         function load() {
             if (loaded) return;
             loaded = true;
+            
+            if (!ENABLED) return;
             
             prefs.add({
                 "Project": {
