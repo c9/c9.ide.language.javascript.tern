@@ -633,12 +633,6 @@ function getCallNode(currentNode, cursorPos) {
         'Call(e, args)', 'New(e, args)', function(b, node) {
             result = node;
             return node;
-        },
-        function(node) {
-            // Show tooltip only on first line if call spans multiple lines
-            var pos = node.getPos();
-            if (pos && pos.sl !== cursorPos.row)
-                return node;
         }
     );
     return result;
