@@ -33,10 +33,14 @@ define(function(require, exports, module) {
                     // UNDONE: doesn't normally exist; should be added by config
                     // smartface: "plugins/smartface/loadInclude.js",
                     angular: "tern/plugin/angular",
+                    commonjs: "tern/plugin/commonjs",
                     doc_comment: "tern/plugin/doc_comment",
+                    es_modules: "tern/plugin/es_modules",
+                    modules: "tern/plugin/modules",
                     node: "tern/plugin/node",
+                    node_resolve: "tern/plugin/node_resolve",
                     requirejs: "tern/plugin/requirejs",
-                    architect_resolver: "./architect_resolver_worker"
+                    architect_resolver: "./architect_resolver_worker",
                 },
                 defs: [{
                     name: "ecma5",
