@@ -180,12 +180,6 @@ define(function(require, exports, module) {
              * @param {Object} ternServerOptions
              */
             setTernServerOptions: setTernServerOptions,
-            
-            /**
-             * Gets list of loaded tern definition names
-             * @param {getTernDefNamesCallback} callback required function to retrieve names
-             */
-            getTernDefNames: getTernDefNames,
              
              /**
               * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones

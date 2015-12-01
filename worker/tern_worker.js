@@ -110,15 +110,6 @@ handler.init = function(callback) {
         setOptions(e.data);
     });
 
-    handler.sender.on("tern_get_def_names", function(e) {
-        var i;
-        var names = [];
-        for (i = 0; i < ternWorker.defs.length; i++) {
-            names.push(ternWorker.defs[i]["!name"]);
-        }
-        handler.sender.emit("tern_read_def_names", names);
-    });
-
     handler.sender.on("tern_set_request_options", function(e) {
         if (e.data) {
             ternRequestOptions = e.data;
