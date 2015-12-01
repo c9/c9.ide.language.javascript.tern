@@ -1,11 +1,24 @@
 /*global tern*/
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
-    return mod(require("../lib/infer"), require("../lib/tern"), require("../lib/comment"), require("acorn/util/walk"), require);
+    return mod(
+        require("../lib/infer"),
+        require("../lib/tern"),
+        require("../lib/comment"),
+        require("acorn/util/walk"),
+        require
+    );
   if (typeof define == "function" && define.amd) // AMD
-    return define(["tern/lib/infer", "tern/lib/tern", "tern/lib/comment", "acorn/dist/walk", "require", "exports"], mod);
+    return define([
+        "tern/lib/infer",
+        "tern/lib/tern",
+        "tern/lib/comment",
+        "acorn/dist/walk",
+        "require",
+        "exports"
+    ], mod);
   mod(tern, tern);
-})(function(infer, tern, comment, walk, require, exports) {
+})(function(infer, tern, comment, resolve, walk, require, exports) {
 
 var architectPlugins;
 var warnedPlugins = {};
@@ -17,13 +30,8 @@ if (exports)
 
 tern.registerPlugin("architect_resolver", function(ternWorker, options) {
     ternWorker._architect = {
-        modules: Object.create(null),
-        currentOrigin: null
+        modules: Object.create(null)
     };
-
-    ternWorker.on("beforeLoad", function(file) {
-        this._architect.currentOrigin = file.name;
-    });
 
     // Collect architect definitions on load
     ternWorker.on("afterLoad", function(file) {
@@ -86,8 +94,8 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
 
     // Assign architect definitions to 'imports.*'
     function onPostInfer(ast, scope) {
-        var path = ternWorker._node.currentFile;
-        var baseDirMatch = path.match(/(.*\/)plugins\//);
+        var path = ternWorker.cx.curOrigin;
+        var baseDirMatch = path.match(/(.*\/)?plugins\//);
         if (!architectPlugins)
             return console.error("[architect_resolver_worker] architectPlugins not available");
         if (!baseDirMatch) {
@@ -142,7 +150,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                         return;
                     }
                     if (path && baseDirMatch)
-                        ternWorker.addFile(path, null, ternWorker._architect.currentOrigin);
+                        ternWorker.addFile(path, null, ternWorker.cx.curOrigin);
                     if (!def)
                         return;
                     
