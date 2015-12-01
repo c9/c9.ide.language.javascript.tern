@@ -10,8 +10,10 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         var language = imports.language;
         var builtinSigs = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
-        
         var plugin = new Plugin("Ajax.org", main.consumes);
+        
+        var defaultPlugins = options.plugins;
+        var defaultDefs = options.defs;
         
         var defs = {};
         var preferenceDefs = {};
@@ -27,14 +29,12 @@ define(function(require, exports, module) {
                 registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
                 // TODO: register "extra" defs?
             }
-            
-            var ternOptions = options.tern;
 
             ternPlugins(function callback(e) {
                 var pluginName;
                 var pluginPath;
-                for (pluginName in ternOptions.plugins) {
-                    pluginPath = ternOptions.plugins[pluginName];
+                for (pluginName in defaultPlugins) {
+                    pluginPath = defaultPlugins[pluginName];
                     e.push({
                         name: pluginName,
                         enabled: true,
@@ -46,8 +46,8 @@ define(function(require, exports, module) {
             var defsToAdd = [];
             var defIndex;
             var d;
-            for (defIndex in ternOptions.defs) {
-                d = ternOptions.defs[defIndex];
+            for (defIndex in defaultDefs) {
+                d = defaultDefs[defIndex];
                 defs[d.name] = d.path;
                 if (d.enabled) {
                     defsToAdd.push(d.path);
