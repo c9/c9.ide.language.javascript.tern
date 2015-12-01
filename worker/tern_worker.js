@@ -22,7 +22,7 @@ var TERN_DEFS = [];
 // Listing these plugins here makes sure they're part of the build process
 var BUILTIN_PLUGINS = {
     angular: require("tern/plugin/angular"),
-    commonjs: require("tern/plugin/commonjs"),
+    // commonjs: require("tern/plugin/commonjs"), // doesn't work in client
     // complete_strings: require("tern/plugin/complete_strings"), // not useful to us
     doc_comment: require("tern/plugin/doc_comment"),
     es_modules: require("tern/plugin/es_modules"),
@@ -30,7 +30,7 @@ var BUILTIN_PLUGINS = {
     node: require("tern/plugin/node"),
     node_resolve: require("tern/plugin/node_resolve"),
     requirejs: require("tern/plugin/requirejs"),
-    webpack: require("tern/plugin/webpack"),
+    // webpack: require("tern/plugin/webpack"), // doesn't work in client
     architect_resolver: architectResolver,
 };
 
