@@ -30,7 +30,7 @@ define(function(require, exports, module) {
                 // TODO: register "extra" defs?
             }
 
-            ternPlugins(function callback(e) {
+            getPlugins(function callback(e) {
                 var pluginName;
                 var pluginPath;
                 for (pluginName in defaultPlugins) {
@@ -107,7 +107,7 @@ define(function(require, exports, module) {
             });
         }
         
-        function ternPlugins(callback) {
+        function getPlugins(callback) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 worker.on("tern_read_plugins", function tern_read_plugins(e) {
@@ -190,10 +190,9 @@ define(function(require, exports, module) {
              /**
               * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones
               * 
-              * @ignore TODO: should be named getPlugins()
               * @param {ternPluginsCallback} callback required function to process status of plugins
               */
-            ternPlugins: ternPlugins,
+            getPlugins: getPlugins,
             
             /**
              * Sets tern request options
