@@ -98,12 +98,6 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
         var baseDirMatch = path.match(/(.*\/)?plugins\//);
         if (!architectPlugins)
             return console.error("[architect_resolver_worker] architectPlugins not available");
-        if (!baseDirMatch) {
-            if (!warnedPlugins[path])
-                console.warn("[architect_resolver_worker] expected plugin to be in plugins/ dir: " + path);
-            warnedPlugins[path] = true;
-            return;
-        }
 
         var consumes;
         walk.simple(ast, {
@@ -139,6 +133,13 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
 
                 if (!consumes)
                     return console.warn("[architect_resolver_worker] main.consumes not defined");
+                    
+                if (!baseDirMatch) {
+                    if (!warnedPlugins[path])
+                        console.warn("[architect_resolver_worker] expected plugin to be in plugins/ dir: " + path);
+                    warnedPlugins[path] = true;
+                    return;
+                }
 
                 consumes.forEach(function(name) {
                     var path = getPath(name);
