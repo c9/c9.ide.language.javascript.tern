@@ -22,10 +22,15 @@ var TERN_DEFS = [];
 // Listing these plugins here makes sure they're part of the build process
 var BUILTIN_PLUGINS = {
     angular: require("tern/plugin/angular"),
-    component: require("tern/plugin/component"),
+    commonjs: require("tern/plugin/commonjs"),
+    // complete_strings: require("tern/plugin/complete_strings"), // not useful to us
     doc_comment: require("tern/plugin/doc_comment"),
+    es_modules: require("tern/plugin/es_modules"),
+    modules: require("tern/plugin/modules"),
     node: require("tern/plugin/node"),
+    node_resolve: require("tern/plugin/node_resolve"),
     requirejs: require("tern/plugin/requirejs"),
+    webpack: require("tern/plugin/webpack"),
     architect_resolver: architectResolver,
 };
 

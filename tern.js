@@ -33,7 +33,6 @@ define(function(require, exports, module) {
                     // UNDONE: doesn't normally exist; should be added by config
                     // smartface: "plugins/smartface/loadInclude.js",
                     angular: "tern/plugin/angular",
-                    component: "tern/plugin/component",
                     doc_comment: "tern/plugin/doc_comment",
                     node: "tern/plugin/node",
                     requirejs: "tern/plugin/requirejs",
