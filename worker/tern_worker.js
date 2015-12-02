@@ -636,6 +636,10 @@ function getCallNode(currentNode, cursorPos) {
         'Call(e, args)', 'New(e, args)', function(b, node) {
             result = node;
             return node;
+        },
+        'Function(x, args, body)', 'Arrow(args, body)', 'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
+            // Bail when one of our parents is a function or what not
+            return node;
         }
     );
     return result;
