@@ -503,10 +503,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (argPos.row >= 9999999999)
             argPos = cursorPos;
 
-        var endLine = callNode[1].getPos().el === callNode.getPos().el
-            ? callNode.getPos().el
-            : callNode.getPos().el - 1;
-        displayPos = { row: endLine, column: callNode[1].getPos().sc };
+        displayPos = argPos;
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
     else if (currentNode.isMatch('Var(_)')) {
@@ -636,6 +633,12 @@ function getCallNode(currentNode, cursorPos) {
         'Call(e, args)', 'New(e, args)', function(b, node) {
             result = node;
             return node;
+        },
+        function(node) {
+            // Show tooltip only on first line if call spans multiple lines
+            var pos = node.getPos();
+            if (pos && pos.sl !== cursorPos.row)
+                return node;
         }
     );
     return result;
