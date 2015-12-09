@@ -58,7 +58,7 @@ define(function(require, exports, module) {
                 },
                 columns : [
                     {
-                        caption: "Name",
+                        caption: "Library",
                         value: "name",
                         width: "100%",
                         type: "tree"
@@ -70,6 +70,14 @@ define(function(require, exports, module) {
                     // }
                 ],
             }, plugin);
+            
+            var getCheckboxHTML = datagrid.getCheckboxHTML;
+            datagrid.getCheckboxHTML = function(node) {
+                return ["Main", "Experimental"].indexOf(node.label) > -1
+                    ? ""
+                    : getCheckboxHTML(node);
+            };
+            
             datagrid.once("draw", function() {
                 builtins = tern.getDefs();
                 datagrid.on("check", onChange.bind(null, true));
@@ -90,6 +98,7 @@ define(function(require, exports, module) {
                             .map(toCheckbox)
                     }
                 ]);
+                datagrid.open(datagrid.root[0]);
             });
         }
         
@@ -101,7 +110,9 @@ define(function(require, exports, module) {
         }
         
         function onChange(value, nodes) {
-            nodes[0] && tern.setDefEnabled(nodes[0].label, nodes[0].isChecked);
+            nodes.forEach(function(n) {
+                tern.setDefEnabled(n.label, n.isChecked);
+            });
         }
         
         plugin.on("load", load);
