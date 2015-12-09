@@ -18,7 +18,7 @@
         "exports"
     ], mod);
   mod(tern, tern);
-})(function(infer, tern, comment, resolve, walk, require, exports) {
+})(function(infer, tern, comment, walk, require, exports) {
 
 var architectPlugins;
 var warnedPlugins = {};
