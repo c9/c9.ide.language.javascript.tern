@@ -12,9 +12,7 @@ define(function(require, exports, module) {
         var Datagrid = imports.Datagrid;
         var tern = imports["language.tern"];
         var plugin = new Plugin("Ajax.org", main.consumes);
-        var experimental = imports["preferences.experimental"];
         
-        var ENABLED = experimental.addExperiment("libraries", false, "Language/JavaScript Library Completions in Project Settings");
         var datagrid;
         var builtins;
         
@@ -23,7 +21,6 @@ define(function(require, exports, module) {
             if (loaded) return;
             loaded = true;
             
-            if (!ENABLED) return;
             
             prefs.add({
                 "Project": {
