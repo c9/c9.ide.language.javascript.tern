@@ -10,6 +10,9 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         var language = imports.language;
         var builtinSigs = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
+        var builtinTrusted = [
+            "meteor"
+        ];
         var plugin = new Plugin("Ajax.org", main.consumes);
         
         var defaultPlugins = options.plugins;
@@ -26,9 +29,17 @@ define(function(require, exports, module) {
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
 
             for (var sig in builtinSigs) {
-                registerDef(sig, "lib/tern_from_ts/sigs/" + builtinSigs[sig].main);
-                // TODO: register "extra" defs?
+                registerDef(
+                    sig,
+                    "lib/tern_from_ts/sigs/" + builtinSigs[sig].main,
+                    // TODO: register "extra" defs?
+                    {
+                        experimental: builtinTrusted.indexOf(sig) == -1,
+                        url: builtinSigs[sig].url
+                    }
+                );
             }
+            registerDef("Angular.js", "tern/plugin/angular", { url: "https://angularjs.org/" });
 
             getPlugins(function callback(e) {
                 var pluginName;
@@ -65,11 +76,12 @@ define(function(require, exports, module) {
             });
         }
                     
-        function registerDef(name, def, enable, hide) {
+        function registerDef(name, def, options) {
+            options = options || {};
+            options.name = name;
             defs[name] = def;
-            if (!hide)
-                preferenceDefs[name] = def;
-            if (enable)
+            preferenceDefs[name] = options;
+            if (options.enabled)
                 setDefEnabled(name, true);
         }
 
@@ -86,17 +98,6 @@ define(function(require, exports, module) {
                     def: defs[name],
                     enabled: enabled !== false
                 }});
-            });
-        }
-        
-        function getTernDefNames(callback) {
-            language.getWorker(function(err, worker) {
-                if (err) return console.error(err);
-                worker.on("tern_read_def_names", function tern_read_def_names (e){
-                    worker.off(tern_read_def_names);
-                    callback(e.data);
-                });
-                worker.emit("tern_get_def_names", { data: null});
             });
         }
         
@@ -132,8 +133,8 @@ define(function(require, exports, module) {
 
         }
         
-        function getDefs(preferenceDefsOnly) {
-            return preferenceDefsOnly ? preferenceDefs : defs;
+        function getDefs() {
+            return preferenceDefs;
         }
         
         plugin.on("load", load);
@@ -163,9 +164,10 @@ define(function(require, exports, module) {
             /**
              * Add a tern definition that users can enable.
              * @param {String} name
-             * @param {String|Object} def   The definition or a URL pointing to the definiton
-             * @param {Boolean} enable      Whether to enable this definition by default
-             * @param {Boolean} hide        Hide this definition from the preferences UI
+             * @param {String|Object} def              The definition or a URL pointing to the definiton
+             * @param {Object} [options]
+             * @param {Boolean} [options.enabled]      Whether to enable this definition by default
+             * @param {Boolean} [options.hidden]       Hide this definition from the preferences UI
              */
             registerDef: registerDef,
             
@@ -196,7 +198,6 @@ define(function(require, exports, module) {
             
             /**
              * Get a list of all definitions.
-             * @param {Boolean} preferenceDefsOnly Return only definitions to show in preferences.
              * @return {String[]}
              */
             getDefs: getDefs

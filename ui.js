@@ -16,6 +16,7 @@ define(function(require, exports, module) {
         
         var ENABLED = experimental.addExperiment("libraries", false, "Language/JavaScript Library Completions in Project Settings");
         var datagrid;
+        var builtins;
         
         var loaded = false;
         function load() {
@@ -53,6 +54,8 @@ define(function(require, exports, module) {
                 maxLines: 10,
                 sort: function(array) {
                     return array.sort(function compare(a, b) {
+                        if (a.label === "Main")
+                            return -1;
                         return a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1;
                     });
                 },
@@ -71,28 +74,44 @@ define(function(require, exports, module) {
                 ],
             }, plugin);
             datagrid.once("draw", function() {
-                var builtins = tern.getDefs(true);
+                builtins = tern.getDefs();
                 datagrid.on("check", onChange.bind(null, true));
                 datagrid.on("uncheck", onChange.bind(null, false));
-                datagrid.setRoot(Object.keys(builtins).map(function(b) {
-                    return {
-                        label: b,
-                        description: '<a href="' + builtins[b].url + '">' + builtins[b].url + '</a>',
-                        main: builtins[b].main,
-                        extra: builtins[b].extra,
-                    };
-                }));
+                datagrid.setRoot([
+                    {
+                        label: "Main",
+                        description: "",
+                        items: Object.keys(builtins)
+                            .filter(function(b) { return !builtins[b].hidden && !builtins[b].experimental })
+                            .map(toCheckbox)
+                    }, 
+                    {
+                        label: "Experimental",
+                        description: "",
+                        items: Object.keys(builtins)
+                            .filter(function(b) { return !builtins[b].hidden && builtins[b].experimental })
+                            .map(toCheckbox)
+                    }
+                ]);
             });
         }
         
-        function onChange(node) {
-            tern.setDefEnabled(node.label, node.isChecked);
+        function toCheckbox(builtin) {
+            return {
+                label: builtin,
+                description: '<a href="' + builtins[builtin].url + '">' + builtins[builtin].url + '</a>'
+            };
+        }
+        
+        function onChange(value, nodes) {
+            nodes[0] && tern.setDefEnabled(nodes[0].label, nodes[0].isChecked);
         }
         
         plugin.on("load", load);
         plugin.on("unload", function() {
             loaded = false;
             datagrid = null;
+            builtins = null;
         });
         
         plugin.freezePublicAPI({
