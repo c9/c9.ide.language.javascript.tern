@@ -103,7 +103,7 @@ handler.init = function(callback) {
     });
 
     handler.sender.on("tern_set_def_enabled", function(e) {
-        setDefEnabled(e.data.name, e.data.def, e.data.enabled);
+        setDefEnabled(e.data.name, e.data.def, e.data.enabled, e.data.options);
     });
 
     handler.sender.on("tern_set_server_options", function(e) {
@@ -792,11 +792,13 @@ handler.$flush = function(callback) {
  * @param {String} name
  * @param {Object} def
  * @param {Boolean} enabled
- * @param {Boolean} firstClass   Treat as if these were built-in types,
-                       *         showing nicer icons and hiding the library name.
+ * @param {Object} [options]
+ * @param {Boolean} [options.firstClass]
+ *       Treat as if these were built-in types,
+ *       showing nicer icons and hiding the library name.
  */
-function setDefEnabled(name, def, enabled, firstClass) {
-    if (firstClass)
+function setDefEnabled(name, def, enabled, options) {
+    if (options && options.firstClass)
         firstClassDefs.push(name);
     
     var i;

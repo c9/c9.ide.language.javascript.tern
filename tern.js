@@ -85,7 +85,7 @@ define(function(require, exports, module) {
                 setDefEnabled(name, true);
         }
 
-        function setDefEnabled(name, enabled) {
+        function setDefEnabled(name, enabled, options) {
             var defsDefinedByPlugin = ["angular", "node", "component", "requirejs"];
             if (!defs[name] && defsDefinedByPlugin.indexOf(name) === -1)
                 throw new Error("Definition " + name + " not found");
@@ -96,7 +96,8 @@ define(function(require, exports, module) {
                 worker.emit("tern_set_def_enabled", { data: {
                     name: name,
                     def: defs[name],
-                    enabled: enabled !== false
+                    enabled: enabled !== false,
+                    options: options,
                 }});
             });
         }
@@ -174,6 +175,11 @@ define(function(require, exports, module) {
             /**
              * Enable or disable a definition.
              * @param name
+             * @param {Boolean} enabled
+             * @param {Object} [options]
+             * @param {Boolean} [options.firstClass]
+             *       Treat as if these were built-in types,
+             *       showing nicer icons and hiding the library name.
              */
             setDefEnabled: setDefEnabled,
             
