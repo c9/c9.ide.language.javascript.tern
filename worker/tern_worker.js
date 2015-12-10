@@ -503,7 +503,10 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (argPos.row >= 9999999999)
             argPos = cursorPos;
 
-        displayPos = argPos;
+        var endLine = callNode[1].getPos().el === callNode.getPos().el
+            ? callNode.getPos().el
+            : callNode.getPos().el - 1;
+        displayPos = { row: endLine, column: callNode[1].getPos().sc };
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
     else if (currentNode.isMatch('Var(_)')) {
@@ -634,11 +637,9 @@ function getCallNode(currentNode, cursorPos) {
             result = node;
             return node;
         },
-        function(node) {
-            // Show tooltip only on first line if call spans multiple lines
-            var pos = node.getPos();
-            if (pos && pos.sl !== cursorPos.row)
-                return node;
+        'Function(x, args, body)', 'Arrow(args, body)', 'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
+            // Bail when one of our parents is a function or what not
+            return node;
         }
     );
     return result;
