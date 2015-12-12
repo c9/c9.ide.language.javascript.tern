@@ -39,33 +39,27 @@ define(function(require, exports, module) {
                     }
                 );
             }
-            registerDef("Angular.js", "tern/plugin/angular", { url: "https://angularjs.org/" });
-
-            getPlugins(function callback(e) {
-                var pluginName;
-                var pluginPath;
-                for (pluginName in defaultPlugins) {
-                    pluginPath = defaultPlugins[pluginName];
-                    e.push({
-                        name: pluginName,
-                        enabled: true,
-                        path: pluginPath
-                    });
-                }
+                    
+            getPlugins(function(err, plugins) {
+                if (err) return console.error(err);
+                
+                setPlugins(plugins.concat(defaultPlugins));
             });
+            registerDef("angular", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
+            registerDef("node", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
+            registerDef("requirejs", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
 
-            var defsToAdd = [];
-            var defIndex;
-            var d;
-            for (defIndex in defaultDefs) {
-                d = defaultDefs[defIndex];
-                defs[d.name] = d.path;
-                if (d.enabled) {
-                    defsToAdd.push(d.path);
-                }
-            }
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
+                
+                var defsToAdd = [];
+                for (var defIndex in defaultDefs) {
+                    var def = defaultDefs[defIndex];
+                    defs[def.name] = def.path;
+                    if (def.enabled) {
+                        defsToAdd.push(def.path);
+                    }
+                }
                 worker.emit("tern_set_def_enabled", {
                     data: {
                         name: "",
@@ -86,8 +80,7 @@ define(function(require, exports, module) {
         }
 
         function setDefEnabled(name, enabled, options) {
-            var defsDefinedByPlugin = ["angular", "node", "component", "requirejs"];
-            if (!defs[name] && defsDefinedByPlugin.indexOf(name) === -1)
+            if (!defs[name] && !defaultPlugins[name])
                 throw new Error("Definition " + name + " not found");
             
             language.getWorker(function(err, worker) {
@@ -99,6 +92,17 @@ define(function(require, exports, module) {
                     enabled: enabled !== false,
                     options: options,
                 }});
+            });
+        }
+        
+        function setPluginEnabled(plugin, enabled) {
+            plugin.enabled = plugin;
+            getPlugins(function(err, plugins) {
+                if (err) return console.error(err);
+                
+                setPlugins(plugins.filter(function(p) {
+                    return p.name !== plugin;
+                }).concat(plugin));
             });
         }
         
@@ -116,13 +120,22 @@ define(function(require, exports, module) {
                     var backupPluginStatus;
                     worker.off(tern_read_plugins);
                     backupPluginStatus = JSON.stringify(e.data);
-                    callback(e.data);
+                    callback(null, e.data);
+                    
+                    // FIXME: remove this strange implicit setter behavior of getPlugins()
                     if (JSON.stringify(e.data) != backupPluginStatus) {
                         // state of plugins have changed, update ternWorker
-                        worker.emit("tern_update_plugins", { data: e.data });
+                       setPlugins(e.data);
                     }
                 });
                 worker.emit("tern_get_plugins", { data: null });
+            });
+        }
+        
+        function setPlugins(plugins) {
+            language.getWorker(function(err, worker) {
+                if (err) return console.error(err);
+                worker.emit("tern_update_plugins", { data: plugins });
             });
         }
         
@@ -156,10 +169,6 @@ define(function(require, exports, module) {
              * This callback is to retrieve names of definitions
              * @callback getTernDefNamesCallback
              * @param {Array.String} names Array of names
-             *
-             * This callback is to retrieve plugin info
-             * @callback ternPluginsCallback
-             * @param {Array.pluginInfo} e list of plugins with status
              */
 
             /**
@@ -190,11 +199,27 @@ define(function(require, exports, module) {
             setTernServerOptions: setTernServerOptions,
              
              /**
-              * Gets list of loaded tern plugins. When retrieved can disable plugins and add new ones
+              * Gets list of loaded tern plugins.
               * 
-              * @param {ternPluginsCallback} callback required function to process status of plugins
+              * @param {Function} callback required function to process status of plugins
+              * @param {Object} callback.err
+              * @param {Object[]} callback.results
               */
             getPlugins: getPlugins,
+             
+             /**
+              * Sets list of loaded tern plugins.
+              * 
+              * @param {Object[]} plugins
+              */
+            setPlugins: setPlugins,
+            
+            /**
+             * Enable or disable a plugin.
+             * @param name
+             * @param {Boolean} enabled
+             */
+             setPluginEnabled: setPluginEnabled,
             
             /**
              * Sets tern request options
