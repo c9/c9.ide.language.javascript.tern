@@ -503,9 +503,9 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (argPos.row >= 9999999999)
             argPos = cursorPos;
 
-        var endLine = callNode[1].getPos().el === callNode.getPos().el
-            ? callNode.getPos().el
-            : callNode.getPos().el - 1;
+        var endLine = callNode.getPos().el;
+        if (callNode[1].length && callNode[1].getPos().el !== callNode.getPos().el)
+            endLine--; // put tooltip near end of arguments, not end of call
         displayPos = { row: endLine, column: callNode[1].getPos().sc };
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
