@@ -637,8 +637,13 @@ function getCallNode(currentNode, cursorPos) {
             result = node;
             return node;
         },
-        'Function(x, args, body)', 'Arrow(args, body)', 'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
-            // Bail when one of our parents is a function or what not
+        'Function(x, args, body)', 'Arrow(args, body)', function(b, node) {
+            // Bail for anything inside a function. The function itself is ok.
+            if (currentNode !== node)
+                return node;
+        },
+        'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
+            // Bail
             return node;
         }
     );
