@@ -632,8 +632,11 @@ handler.getArgIndex = function(node, doc, cursorPos) {
 
 function getCallNode(currentNode, cursorPos) {
     var result;
+    var previous;
     currentNode.traverseUp(
         'Call(e, args)', 'New(e, args)', function(b, node) {
+            if (b.e === previous)
+                return;
             result = node;
             return node;
         },
@@ -641,10 +644,14 @@ function getCallNode(currentNode, cursorPos) {
             // Bail for anything inside a function. The function itself is ok.
             if (currentNode !== node)
                 return node;
+            previous = node;
         },
         'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
             // Bail
             return node;
+        },
+        function(node) {
+            previous = node;
         }
     );
     return result;
