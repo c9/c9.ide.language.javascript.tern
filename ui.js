@@ -124,7 +124,7 @@ define(function(require, exports, module) {
                 else
                     delete config[n.label];
             });
-            settings.setJson("project/language/tern");
+            settings.setJson("project/language/tern", config);
         }
         
         plugin.on("load", load);
