@@ -48,9 +48,6 @@ define(function(require, exports, module) {
                 
                 setPlugins(plugins.concat(defaultPlugins));
             });
-            registerDef("angular", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
-            registerDef("node", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
-            registerDef("requirejs", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
 
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
@@ -60,6 +57,12 @@ define(function(require, exports, module) {
                 if (resetConfig)
                     config = {};
                 
+                // TODO: add these plugins as options to the preferences
+                // registerDef("angular", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
+                // registerDef("node", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
+                // registerDef("requirejs", "tern/plugin/angular", { url: "https://angularjs.org/", isPlugin: true });
+                
+                // var defsToAdd = [];
                 defaultDefs.forEach(function(def) {
                     if (resetConfig && def.enabled)
                         config[def.name] = true;
