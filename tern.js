@@ -68,9 +68,14 @@ define(function(require, exports, module) {
                         config[def.name] = true;
                     else
                         def.enabled = config[def.name];
+                    def.default = true;
     
                     registerDef(def.name, def.path, def);
                 });
+                for (var key in config) {
+                    if (defs[key] && !defs[key].default)
+                        setDefEnabled(def, true);
+                }
                 settings.setJson("project/language/tern_defs", config);
                 emit.sticky("ready");
             });
