@@ -344,7 +344,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
                 return; // skip completions like onchange (from window.onchange)
 
             var isFromLibrary = match.origin && match.origin[0] !== "/" && firstClassDefs.indexOf(match.origin) === -1;
-            var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
+            var priority = PRIORITY_DEFAULT;
             var icon = getIcon(match, priority);
 
             // Clean up messy node completions
