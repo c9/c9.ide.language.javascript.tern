@@ -498,7 +498,10 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (argPos.row >= 9999999999)
             argPos = cursorPos;
 
-        displayPos = argPos;
+        var endLine = callNode.getPos().el;
+        if (callNode[1].length && callNode[1].getPos().el !== callNode.getPos().el)
+            endLine--; // put tooltip near end of arguments, not end of call
+        displayPos = { row: endLine, column: callNode[1].getPos().sc };
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
     else if (currentNode.isMatch('Var(_)')) {
@@ -624,16 +627,26 @@ handler.getArgIndex = function(node, doc, cursorPos) {
 
 function getCallNode(currentNode, cursorPos) {
     var result;
+    var previous;
     currentNode.traverseUp(
         'Call(e, args)', 'New(e, args)', function(b, node) {
+            if (b.e === previous)
+                return;
             result = node;
             return node;
         },
-        function(node) {
-            // Show tooltip only on first line if call spans multiple lines
-            var pos = node.getPos();
-            if (pos && pos.sl !== cursorPos.row)
+        'Function(x, args, body)', 'Arrow(args, body)', function(b, node) {
+            // Bail for anything inside a function. The function itself is ok.
+            if (currentNode !== node)
                 return node;
+            previous = node;
+        },
+        'PropertyInit(x, _)', 'Method(x, body)', function(b, node) {
+            // Bail
+            return node;
+        },
+        function(node) {
+            previous = node;
         }
     );
     return result;
