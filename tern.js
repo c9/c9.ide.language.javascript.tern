@@ -9,7 +9,7 @@ define(function(require, exports, module) {
     function main(options, imports, register) {
         var Plugin = imports.Plugin;
         var language = imports.language;
-        var builtinSigs = JSON.parse(require("text!lib/tern_from_ts/sigs/__list.json")).sigs;
+        var builtinDefs = JSON.parse(require("text!lib/tern_from_ts/defs/__list.json")).defs;
         var builtinTrusted = [
             "meteor"
         ];
