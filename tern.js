@@ -1,7 +1,8 @@
 define(function(require, exports, module) {
     main.consumes = [
         "Plugin", "language",
-        "language.tern.architect_resolver" // implicit worker-side dependency
+        "language.tern.architect_resolver", // implicit worker-side dependency
+        "settings"
     ];
     main.provides = ["language.tern"];
     return main;
@@ -9,11 +10,13 @@ define(function(require, exports, module) {
     function main(options, imports, register) {
         var Plugin = imports.Plugin;
         var language = imports.language;
+        var settings = imports.settings;
         var builtinDefs = JSON.parse(require("text!lib/tern_from_ts/defs/__list.json")).defs;
         var builtinTrusted = [
             "meteor"
         ];
         var plugin = new Plugin("Ajax.org", main.consumes);
+        var emit = plugin.getEmitter();
         
         var defaultPlugins = options.plugins;
         var defaultDefs = options.defs;
@@ -28,18 +31,18 @@ define(function(require, exports, module) {
             
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
 
-            for (var sig in builtinSigs) {
+            for (var def in builtinDefs) {
                 registerDef(
-                    sig,
-                    "lib/tern_from_ts/sigs/" + builtinSigs[sig].main,
+                    def,
+                    "lib/tern_from_ts/defs/" + builtinDefs[def].main,
                     // TODO: register "extra" defs?
                     {
-                        experimental: builtinTrusted.indexOf(sig) == -1,
-                        url: builtinSigs[sig].url
+                        experimental: builtinTrusted.indexOf(def) == -1,
+                        url: builtinDefs[def].url
                     }
                 );
             }
-                    
+                   
             getPlugins(function(err, plugins) {
                 if (err) return console.error(err);
                 
@@ -52,21 +55,21 @@ define(function(require, exports, module) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
                 
-                var defsToAdd = [];
-                for (var defIndex in defaultDefs) {
-                    var def = defaultDefs[defIndex];
-                    defs[def.name] = def.path;
-                    if (def.enabled) {
-                        defsToAdd.push(def.path);
-                    }
-                }
-                worker.emit("tern_set_def_enabled", {
-                    data: {
-                        name: "",
-                        def: defsToAdd,
-                        enabled: true
-                    }
+                var config = settings.getJson("project/language/tern_defs");
+                var resetConfig = !config;
+                if (resetConfig)
+                    config = {};
+                
+                defaultDefs.forEach(function(def) {
+                    if (resetConfig && def.enabled)
+                        config[def.name] = true;
+                    else
+                        def.enabled = config[def.name];
+    
+                    registerDef(def.name, def.path, def);
                 });
+                settings.setJson("project/language/tern_defs", config);
+                emit.sticky("ready");
             });
         }
                     

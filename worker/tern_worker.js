@@ -828,7 +828,7 @@ function setDefEnabled(name, def, enabled, options) {
     var downloaded = 0;
     defs.forEach(function(def) {
         if (typeof def !== "string") {
-            ternWorker.defs.push(def[i]);
+            ternWorker.defs.push(def);
             return checkDone();
         }
             

@@ -1,6 +1,7 @@
 define(function(require, exports, module) {
     main.consumes = [
-        "Plugin", "preferences", "ui", "Datagrid", "preferences.experimental", "language.tern"
+        "Plugin", "preferences", "ui", "Datagrid", "settings",
+        "preferences.experimental", "language.tern"
     ];
     main.provides = ["language.tern.ui"];
     return main;
@@ -9,12 +10,13 @@ define(function(require, exports, module) {
         var Plugin = imports.Plugin;
         var prefs = imports.preferences;
         var ui = imports.ui;
+        var settings = imports.settings;
         var Datagrid = imports.Datagrid;
         var tern = imports["language.tern"];
         var plugin = new Plugin("Ajax.org", main.consumes);
         
         var datagrid;
-        var builtins;
+        var defs;
         
         var loaded = false;
         function load() {
@@ -58,7 +60,7 @@ define(function(require, exports, module) {
                 },
                 columns : [
                     {
-                        caption: "Library",
+                        caption: "JavaScript Libraries Used",
                         value: "name",
                         width: "100%",
                         type: "tree"
@@ -79,47 +81,57 @@ define(function(require, exports, module) {
             };
             
             datagrid.once("draw", function() {
-                builtins = tern.getDefs();
-                datagrid.on("check", onChange.bind(null, true));
-                datagrid.on("uncheck", onChange.bind(null, false));
-                datagrid.setRoot([
-                    {
-                        label: "Main",
-                        description: "",
-                        items: Object.keys(builtins)
-                            .filter(function(b) { return !builtins[b].hidden && !builtins[b].experimental })
-                            .map(toCheckbox)
-                    }, 
-                    {
-                        label: "Experimental",
-                        description: "",
-                        items: Object.keys(builtins)
-                            .filter(function(b) { return !builtins[b].hidden && builtins[b].experimental })
-                            .map(toCheckbox)
-                    }
-                ]);
-                datagrid.open(datagrid.root[0]);
-            });
-        }
+                tern.once("ready", function() {
+                    var config = settings.getJson("project/language/tern_defs");
+                    defs = tern.getDefs();
+                    datagrid.on("check", onChange.bind(null, true));
+                    datagrid.on("uncheck", onChange.bind(null, false));
+                    datagrid.setRoot([
+                        {
+                            label: "Main",
+                            description: "",
+                            items: Object.keys(defs)
+                                .filter(function(d) { return !defs[d].hidden && !defs[d].experimental })
+                                .map(toCheckbox)
+                        }, 
+                        {
+                            label: "Experimental",
+                            description: "",
+                            items: Object.keys(defs)
+                                .filter(function(d) { return !defs[d].hidden && defs[d].experimental })
+                                .map(toCheckbox)
+                        }
+                    ]);
+                    datagrid.open(datagrid.root[0]);
         
-        function toCheckbox(builtin) {
-            return {
-                label: builtin,
-                description: '<a href="' + builtins[builtin].url + '">' + builtins[builtin].url + '</a>'
-            };
+                    function toCheckbox(def) {
+                        return {
+                            label: def,
+                            description: '<a href="' + defs[def].url + '">' + defs[def].url + '</a>',
+                            isChecked: config[def],
+                        };
+                    }
+                });
+            });
         }
         
         function onChange(value, nodes) {
+            var config = settings.getJson("project/language/tern_defs");
             nodes.forEach(function(n) {
                 tern.setDefEnabled(n.label, n.isChecked);
+                if (n.isChecked)
+                    config[n.label] = true;
+                else
+                    delete config[n.label];
             });
+            settings.setJson("project/language/tern");
         }
         
         plugin.on("load", load);
         plugin.on("unload", function() {
             loaded = false;
             datagrid = null;
-            builtins = null;
+            defs = null;
         });
         
         plugin.freezePublicAPI({
