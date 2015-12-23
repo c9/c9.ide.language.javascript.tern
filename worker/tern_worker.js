@@ -236,6 +236,12 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
     }
     if (requiresReset)
         initTern();
+    
+    // Delete identifier also declared by "browser"
+    ternWorker.defs.forEach(function(d) {
+        if (d["!name"] === "node")
+            delete d.console;
+    });
 };
 
 function onWatchDirChange(e) {
