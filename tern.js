@@ -79,7 +79,7 @@ define(function(require, exports, module) {
             defs[name] = def;
             preferenceDefs[name] = options;
             if (options.enabled)
-                setDefEnabled(name, true);
+                setDefEnabled(name, true, options);
         }
 
         function setDefEnabled(name, enabled, options) {
