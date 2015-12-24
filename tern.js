@@ -13,7 +13,10 @@ define(function(require, exports, module) {
         var settings = imports.settings;
         var builtinDefs = JSON.parse(require("text!lib/tern_from_ts/defs/__list.json")).defs;
         var builtinTrusted = [
-            "meteor"
+            "meteor", "bootstrap"
+        ];
+        var builtinsBroken = [
+            /mocha.*/, /jquery.*/, /[\.-]/
         ];
         var plugin = new Plugin("Ajax.org", main.consumes);
         var emit = plugin.getEmitter();
@@ -32,6 +35,10 @@ define(function(require, exports, module) {
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/tern_worker");
 
             for (var def in builtinDefs) {
+                if (builtinsBroken.some(function(b) {
+                    return b.test(def);
+                }))
+                    continue;
                 registerDef(
                     def,
                     "lib/tern_from_ts/defs/" + builtinDefs[def].main,
