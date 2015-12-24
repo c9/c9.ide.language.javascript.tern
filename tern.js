@@ -81,7 +81,7 @@ define(function(require, exports, module) {
                 });
                 for (var key in config) {
                     if (defs[key] && !defs[key].default)
-                        setDefEnabled(def, true);
+                        setDefEnabled(key, true);
                 }
                 settings.setJson("project/language/tern_defs", config);
                 emit.sticky("ready");
