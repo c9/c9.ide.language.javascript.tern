@@ -280,7 +280,7 @@ handler.onDocumentOpen = function(path, doc, oldPath, callback) {
     callback();
 };
 
-handler.analyze = function(value, ast, callback, minimalAnalysis) {
+handler.analyze = function(value, ast, options, callback) {
     if (fileCache[this.path])
         return callback();
 
