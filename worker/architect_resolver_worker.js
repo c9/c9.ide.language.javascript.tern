@@ -35,21 +35,20 @@ handler.onceReady = function(callback) {
     });
 };
 
-handler.complete = function(doc, fullAst, pos, options, callback) {
+handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     // We're string in '_ = [...string...]'
-    var node = options.node;
     if (!ready
-        || !node
-        || node.cons !== "String"
-        || !node.parent
-        || !node.parent.parent
-        || node.parent.parent.cons !== "Array"
-        || !node.parent.parent.parent
-        || node.parent.parent.parent.cons !== "Assign"
+        || !currentNode
+        || currentNode.cons !== "String"
+        || !currentNode.parent
+        || !currentNode.parent.parent
+        || currentNode.parent.parent.cons !== "Array"
+        || !currentNode.parent.parent.parent
+        || currentNode.parent.parent.parent.cons !== "Assign"
         )
         return callback();
     
-    var lhs = node.parent.parent.parent[0];
+    var lhs = currentNode.parent.parent.parent[0];
     if (lhs.cons !== "PropAccess"
         || lhs[1].value !== "consumes")
         return callback();

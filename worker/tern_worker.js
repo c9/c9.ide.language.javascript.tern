@@ -280,7 +280,7 @@ handler.onDocumentOpen = function(path, doc, oldPath, callback) {
     callback();
 };
 
-handler.analyze = function(value, ast, options, callback) {
+handler.analyze = function(value, ast, callback, minimalAnalysis) {
     if (fileCache[this.path])
         return callback();
 
@@ -302,12 +302,11 @@ handler.analyze = function(value, ast, options, callback) {
     });
 };
 
-handler.complete = function(doc, fullAst, pos, options, callback) {
+handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     // Don't show completions for definitions
-    var node = options.node;
-    if (!node ||
+    if (!currentNode ||
         ["FArg", "Function", "Arrow", "VarDecl", "VarDeclInit", "ConstDecl", "ConstDeclInit",
-        "LetDecl", "LetDeclInit", "PropertyInit", "Label", "String"].indexOf(node.cons) > -1)
+        "LetDecl", "LetDeclInit", "PropertyInit", "Label", "String"].indexOf(currentNode.cons) > -1)
         return callback();
 
     addTernFile(this.path, doc.getValue());
@@ -324,8 +323,8 @@ handler.complete = function(doc, fullAst, pos, options, callback) {
         guess: true,
         caseInsensitive: false,
     };
-    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    handler.$request(ternOptions, function(err, result) {
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    handler.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -338,7 +337,7 @@ handler.complete = function(doc, fullAst, pos, options, callback) {
             if (match.type === "?")
                 delete match.type;
 
-            var isContextual = node.cons === "PropAccess" && !match.guess;
+            var isContextual = currentNode.cons === "PropAccess" && !match.guess;
 
             if (!isContextual && match.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
@@ -398,7 +397,7 @@ handler.complete = function(doc, fullAst, pos, options, callback) {
     });
 };
 
-handler.jumpToDefinition = function(doc, fullAst, pos, options, callback) {
+handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
     addTernFile(this.path, doc.getValue());
     var defaultOptions = {
         type: "definition",
@@ -409,8 +408,8 @@ handler.jumpToDefinition = function(doc, fullAst, pos, options, callback) {
         urls: true,
         caseInsensitive: false,
     };
-    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(ternOptions, function(err, result) {
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -430,7 +429,7 @@ handler.jumpToDefinition = function(doc, fullAst, pos, options, callback) {
 
 /* UNDONE: getRenamePositions(); doesn't appear to properly handle local references
    e.g. var foo = child_process.exec(); foo(); -> foo can't be renamed
-handler.getRenamePositions = function(doc, fullAst, pos, options, callback) {
+handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) {
     var defaultOptions = addTernFile(this.path, doc.getValue());
     {
         type: "definition",
@@ -441,8 +440,8 @@ handler.getRenamePositions = function(doc, fullAst, pos, options, callback) {
         urls: true,
         caseInsensitive: false,
     };
-    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(ternOptions, function(err, def) {
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, def) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -491,13 +490,12 @@ handler.getRenamePositions = function(doc, fullAst, pos, options, callback) {
 };
 */
 
-handler.tooltip = function(doc, fullAst, cursorPos, options, callback) {
-    var node = options.node;
-    if (!node)
+handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
+    if (!currentNode)
         return callback();
     var argIndex = -1;
 
-    var callNode = getCallNode(node, cursorPos);
+    var callNode = getCallNode(currentNode, cursorPos);
     var displayPos;
 
     if (callNode) {
@@ -511,11 +509,11 @@ handler.tooltip = function(doc, fullAst, cursorPos, options, callback) {
         displayPos = { row: endLine, column: callNode[1].getPos().sc };
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
-    else if (node.isMatch('Var(_)')) {
-        displayPos = { row: node.getPos().sl, column: node.getPos().sc };
+    else if (currentNode.isMatch('Var(_)')) {
+        displayPos = { row: currentNode.getPos().sl, column: currentNode.getPos().sc };
         argIndex = -1;
         // Don't display tooltip at end of identifier (may just have been typed in)
-        if (cursorPos.column === node.getPos().ec)
+        if (cursorPos.column === currentNode.getPos().ec)
             return callback();
     }
     else {
@@ -539,8 +537,8 @@ handler.tooltip = function(doc, fullAst, cursorPos, options, callback) {
         caseInsensitive: false,
         preferFunction: true,
     };
-    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(ternOptions, function(err, result) {
+    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(options, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -548,7 +546,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, options, callback) {
         if (!result.type || !result.name || !result.type.match(/^fn\(/))
             return callback();
 
-        var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : node;
+        var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : currentNode;
         var sig = getSignature(result);
         if (sig.parameters[argIndex])
             sig.parameters[argIndex].active = true;
@@ -632,10 +630,10 @@ handler.getArgIndex = function(node, doc, cursorPos) {
     return result;
 };
 
-function getCallNode(node, cursorPos) {
+function getCallNode(currentNode, cursorPos) {
     var result;
     var previous;
-    node.traverseUp(
+    currentNode.traverseUp(
         'Call(e, args)', 'New(e, args)', function(b, node) {
             if (b.e === previous)
                 return;
@@ -644,7 +642,7 @@ function getCallNode(node, cursorPos) {
         },
         'Function(x, args, body)', 'Arrow(args, body)', function(b, node) {
             // Bail for anything inside a function. The function itself is ok.
-            if (node !== node)
+            if (currentNode !== node)
                 return node;
             previous = node;
         },
