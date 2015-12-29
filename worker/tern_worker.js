@@ -632,10 +632,10 @@ handler.getArgIndex = function(node, doc, cursorPos) {
     return result;
 };
 
-function getCallNode(node, cursorPos) {
+function getCallNode(currentNode, cursorPos) {
     var result;
     var previous;
-    node.traverseUp(
+    currentNode.traverseUp(
         'Call(e, args)', 'New(e, args)', function(b, node) {
             if (b.e === previous)
                 return;
@@ -644,7 +644,7 @@ function getCallNode(node, cursorPos) {
         },
         'Function(x, args, body)', 'Arrow(args, body)', function(b, node) {
             // Bail for anything inside a function. The function itself is ok.
-            if (node !== node)
+            if (node !== currentNode)
                 return node;
             previous = node;
         },
