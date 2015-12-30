@@ -280,7 +280,7 @@ handler.onDocumentOpen = function(path, doc, oldPath, callback) {
     callback();
 };
 
-handler.analyze = function(value, ast, callback, minimalAnalysis) {
+handler.analyze = function(value, ast, options, callback) {
     if (fileCache[this.path])
         return callback();
 
@@ -302,11 +302,12 @@ handler.analyze = function(value, ast, callback, minimalAnalysis) {
     });
 };
 
-handler.complete = function(doc, fullAst, pos, currentNode, callback) {
+handler.complete = function(doc, fullAst, pos, options, callback) {
     // Don't show completions for definitions
-    if (!currentNode ||
+    var node = options.node;
+    if (!node ||
         ["FArg", "Function", "Arrow", "VarDecl", "VarDeclInit", "ConstDecl", "ConstDeclInit",
-        "LetDecl", "LetDeclInit", "PropertyInit", "Label", "String"].indexOf(currentNode.cons) > -1)
+        "LetDecl", "LetDeclInit", "PropertyInit", "Label", "String"].indexOf(node.cons) > -1)
         return callback();
 
     addTernFile(this.path, doc.getValue());
@@ -323,8 +324,8 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
         guess: true,
         caseInsensitive: false,
     };
-    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    handler.$request(options, function(err, result) {
+    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    handler.$request(ternOptions, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -337,7 +338,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
             if (match.type === "?")
                 delete match.type;
 
-            var isContextual = currentNode.cons === "PropAccess" && !match.guess;
+            var isContextual = node.cons === "PropAccess" && !match.guess;
 
             if (!isContextual && match.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
@@ -397,7 +398,7 @@ handler.complete = function(doc, fullAst, pos, currentNode, callback) {
     });
 };
 
-handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
+handler.jumpToDefinition = function(doc, fullAst, pos, options, callback) {
     addTernFile(this.path, doc.getValue());
     var defaultOptions = {
         type: "definition",
@@ -408,8 +409,8 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
         urls: true,
         caseInsensitive: false,
     };
-    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(options, function(err, result) {
+    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(ternOptions, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -429,7 +430,7 @@ handler.jumpToDefinition = function(doc, fullAst, pos, currentNode, callback) {
 
 /* UNDONE: getRenamePositions(); doesn't appear to properly handle local references
    e.g. var foo = child_process.exec(); foo(); -> foo can't be renamed
-handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) {
+handler.getRenamePositions = function(doc, fullAst, pos, options, callback) {
     var defaultOptions = addTernFile(this.path, doc.getValue());
     {
         type: "definition",
@@ -440,8 +441,8 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
         urls: true,
         caseInsensitive: false,
     };
-    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(options, function(err, def) {
+    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(ternOptions, function(err, def) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -490,12 +491,13 @@ handler.getRenamePositions = function(doc, fullAst, pos, currentNode, callback) 
 };
 */
 
-handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
-    if (!currentNode)
+handler.tooltip = function(doc, fullAst, cursorPos, options, callback) {
+    var node = options.node;
+    if (!node)
         return callback();
     var argIndex = -1;
 
-    var callNode = getCallNode(currentNode, cursorPos);
+    var callNode = getCallNode(node, cursorPos);
     var displayPos;
 
     if (callNode) {
@@ -509,11 +511,11 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         displayPos = { row: endLine, column: callNode[1].getPos().sc };
         argIndex = this.getArgIndex(callNode, doc, cursorPos);
     }
-    else if (currentNode.isMatch('Var(_)')) {
-        displayPos = { row: currentNode.getPos().sl, column: currentNode.getPos().sc };
+    else if (node.isMatch('Var(_)')) {
+        displayPos = { row: node.getPos().sl, column: node.getPos().sc };
         argIndex = -1;
         // Don't display tooltip at end of identifier (may just have been typed in)
-        if (cursorPos.column === currentNode.getPos().ec)
+        if (cursorPos.column === node.getPos().ec)
             return callback();
     }
     else {
@@ -537,8 +539,8 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         caseInsensitive: false,
         preferFunction: true,
     };
-    var options = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
-    this.$request(options, function(err, result) {
+    var ternOptions = mix(defaultOptions, ternRequestOptions[defaultOptions.type]);
+    this.$request(ternOptions, function(err, result) {
         if (err) {
             console.error(err.stack || err);
             return callback();
@@ -546,7 +548,7 @@ handler.tooltip = function(doc, fullAst, cursorPos, currentNode, callback) {
         if (!result.type || !result.name || !result.type.match(/^fn\(/))
             return callback();
 
-        var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : currentNode;
+        var rangeNode = callNode && callNode.getPos().sc < 99999 ? callNode : node;
         var sig = getSignature(result);
         if (sig.parameters[argIndex])
             sig.parameters[argIndex].active = true;
@@ -642,7 +644,7 @@ function getCallNode(currentNode, cursorPos) {
         },
         'Function(x, args, body)', 'Arrow(args, body)', function(b, node) {
             // Bail for anything inside a function. The function itself is ok.
-            if (currentNode !== node)
+            if (node !== currentNode)
                 return node;
             previous = node;
         },
