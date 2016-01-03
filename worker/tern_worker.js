@@ -241,6 +241,12 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
     }
     if (requiresReset)
         initTern();
+    
+    // Delete identifier also declared by "browser"
+    ternWorker.defs.forEach(function(d) {
+        if (d["!name"] === "node")
+            delete d.console;
+    });
 };
 
 function onWatchDirChange(e) {
@@ -343,7 +349,9 @@ handler.complete = function(doc, fullAst, pos, options, callback) {
             if (!isContextual && match.origin === "browser" && prefix.length < 3)
                 return; // skip completions like onchange (from window.onchange)
 
-            var isFromLibrary = match.origin && match.origin[0] !== "/" && firstClassDefs.indexOf(match.origin) === -1;
+            var isFromLibrary =
+                !(match.origin && match.origin === "browser") && // HACK: to be removed in language-library-ui branch
+                match.origin && match.origin[0] !== "/" && firstClassDefs.indexOf(match.origin) === -1;
             var priority = isContextual || !isFromLibrary ? PRIORITY_DEFAULT : PRIORITY_LIBRARY_GLOBAL;
             var icon = getIcon(match, priority);
 
