@@ -76,6 +76,9 @@ define(function(require, exports, module) {
                     else
                         def.enabled = config[def.name] && config[def.name].enabled;
                     def.default = true;
+                    
+                    if (defs[def.name]) // skip builtins already added
+                        return;
     
                     registerDef(def.name, def.path, def);
                 });
