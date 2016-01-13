@@ -13,7 +13,7 @@ define(function(require, exports, module) {
         var settings = imports.settings;
         var builtinDefs = JSON.parse(require("text!lib/tern_from_ts/defs/__list.json")).defs;
         var builtinTrusted = [
-            "meteor", "bootstrap"
+            "meteor"
         ];
         var builtinsBroken = [
             /mocha.*/, /jquery.*/, /[\.-]/
