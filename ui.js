@@ -108,7 +108,7 @@ define(function(require, exports, module) {
                         return {
                             label: def,
                             description: '<a href="' + defs[def].url + '">' + defs[def].url + '</a>',
-                            isChecked: config[def],
+                            isChecked: config[def] && config[def].enabled,
                         };
                     }
                 });
@@ -120,9 +120,9 @@ define(function(require, exports, module) {
             nodes.forEach(function(n) {
                 tern.setDefEnabled(n.label, n.isChecked);
                 if (n.isChecked)
-                    config[n.label] = true;
+                    config[n.label] = { enabled: true };
                 else
-                    delete config[n.label];
+                    config[n.label] = { enabled: false };
             });
             settings.setJson("project/language/tern_defs", config);
         }

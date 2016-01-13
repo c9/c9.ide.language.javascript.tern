@@ -72,15 +72,15 @@ define(function(require, exports, module) {
                 // var defsToAdd = [];
                 defaultDefs.forEach(function(def) {
                     if (resetConfig && def.enabled)
-                        config[def.name] = true;
+                        config[def.name] = { enabled: true };
                     else
-                        def.enabled = config[def.name];
+                        def.enabled = config[def.name] && config[def.name].enabled;
                     def.default = true;
     
                     registerDef(def.name, def.path, def);
                 });
                 for (var key in config) {
-                    if (defs[key] && !defs[key].default)
+                    if (config[key].enabled && defs[key] && !defs[key].default)
                         setDefEnabled(key, true);
                 }
                 settings.setJson("project/language/tern_defs", config);
