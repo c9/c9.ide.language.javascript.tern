@@ -380,7 +380,7 @@ handler.complete = function(doc, fullAst, pos, options, callback) {
 
             var doc = (match.type && !isFunction && !isAnonymous ? "Type: " + match.type + "<p>" : "")
                     + (match.doc ? filterDocumentation(match.doc) : "");
-            if (match.doc = "Every function in JavaScript is actually a Function object.")
+            if (match.doc === "Every function in JavaScript is actually a Function object.")
                 doc = "";
             return {
                 id: match.name,
