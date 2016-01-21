@@ -146,12 +146,15 @@ function initTern() {
         plugins: ternServerOptions.plugins !== undefined ? ternServerOptions.plugins : {},
         dependencyBudget: ternServerOptions.dependencyBudget !== undefined ? ternServerOptions.dependencyBudget : MAX_FILE_SIZE,
         reuseInstances: ternServerOptions.reuseInstances !== undefined ? ternServerOptions.reuseInstances : true,
-        getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
-            if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
-                file += ".js";
-            // TODO we can use file cache in navigate to find a folder for unresolved modules
+        normalizeFilename: function(file) {
             if (file[0] != "/")
                 file = "/" + file;
+            if (!file.match(/[\/\\][^/\\]*\.[^/\\]*$/))
+                file += ".js";
+            return file;
+        },
+        getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
+            // TODO we can use file cache in navigate to find a folder for unresolved modules
 
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
