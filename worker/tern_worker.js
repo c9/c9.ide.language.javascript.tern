@@ -155,6 +155,9 @@ function initTern() {
         },
         getFile: ternServerOptions.getFile !== undefined ? ternServerOptions.getFile : function(file, callback) {
             // TODO we can use file cache in navigate to find a folder for unresolved modules
+            
+            if (file == handler.path)
+                return done(null, handler.doc.getValue());
 
             util.stat(file, function(err, stat) {
                 if (stat && stat.size > MAX_FILE_SIZE) {
