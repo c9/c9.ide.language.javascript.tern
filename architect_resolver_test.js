@@ -62,7 +62,36 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
         "plugins/c9.ide.language.css/css",
         "plugins/c9.ide.language.javascript/javascript",
         "plugins/c9.ide.language.javascript.infer/jsinfer",
-        "plugins/c9.ide.language.javascript.tern/tern",
+        {
+            packagePath: "plugins/c9.ide.language.javascript.tern/tern",
+            defs: [],
+            plugins: [
+                {
+                    name: "doc_comment",
+                    path: "tern/plugin/doc_comment",
+                    enabled: true,
+                    hidden: true,
+                },
+                {
+                    name: "node",
+                    path: "tern/plugin/node",
+                    enabled: true,
+                    hidden: false,
+                },
+                {
+                    name: "requirejs",
+                    path: "tern/plugin/requirejs",
+                    enabled: true,
+                    hidden: false,
+                },
+                {
+                    name: "architect_resolver",
+                    path: "./architect_resolver_worker",
+                    enabled: true,
+                    hidden: true,
+                },
+            ],
+        },
         "plugins/c9.ide.language.javascript.tern/architect_resolver",
         "plugins/c9.ide.keys/commands",
         "plugins/c9.fs/proc",

@@ -117,7 +117,7 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                     || node.params[2].name !== "register")
                     return;
 
-                var importsVal = node.body.scope.props.imports;
+                var importsVal = node.body.scope.prev.props.imports;
 
                 // Seems like our argument doesn't want to complete without a type
                 var type = new infer.Obj();
