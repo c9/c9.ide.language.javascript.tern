@@ -179,6 +179,9 @@ define(function(require, exports, module) {
             preferenceDefs = {};
         });
         
+        /**
+         * Tern code completion plugin.
+         */
         plugin.freezePublicAPI({
             /**
              * Callback function for getting tern definition list from directly tern server
@@ -255,9 +258,6 @@ define(function(require, exports, module) {
             getDefs: getDefs
         });
         
-        /**
-         * Tern-based code completion for Cloud9.
-         */
         register(null, {
             "language.tern": plugin
         });
