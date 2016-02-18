@@ -114,7 +114,8 @@ tern.registerPlugin("architect_resolver", function(ternWorker, options) {
                 if (node.id.name !== "main"
                     || node.params.length !== 3
                     || node.params[1].name !== "imports"
-                    || node.params[2].name !== "register")
+                    || node.params[2].name !== "register"
+                    || !node.body.scope)
                     return;
 
                 var importsVal = node.body.scope.prev.props.imports;
