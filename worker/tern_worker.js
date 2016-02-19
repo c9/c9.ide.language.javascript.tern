@@ -81,6 +81,8 @@ handler.getMaxFileSizeSupported = function() {
     return .25 * 10 * 1000 * 80;
 };
 
+handler.$recacheCompletionLength = 3;
+
 handler.init = function(callback) {
     initTern();
     inferCompleter.setExtraModules(ternWorker.cx.definitions.node);
