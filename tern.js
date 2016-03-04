@@ -22,7 +22,7 @@ define(function(require, exports, module) {
         var emit = plugin.getEmitter();
         
         var defaultPlugins = options.plugins;
-        var defaultDefs = options.defs;
+        var defaultDefs = options.defs || [];
         
         var defs = {};
         var preferenceDefs = {};
