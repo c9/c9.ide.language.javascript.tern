@@ -21,7 +21,7 @@ var TERN_DEFS = [];
 
 // Listing these plugins here makes sure they're part of the build process
 var BUILTIN_PLUGINS = {
-    angular: require("tern/plugin/angular"),
+    // angular: require("tern/plugin/angular"), // crashes the browser see https://github.com/ternjs/tern/issues/725
     // commonjs: require("tern/plugin/commonjs"), // doesn't work in client
     // complete_strings: require("tern/plugin/complete_strings"), // not useful to us
     doc_comment: require("tern/plugin/doc_comment"),
@@ -216,6 +216,8 @@ var updatePlugins = module.exports.updatePlugins = function(plugins) {
     for (var p in plugins) {
         var targetPlugin = plugins[p];
         var plugin = ternWorker.options.plugins[targetPlugin.name];
+        if (targetPlugin.name == "angular")
+            continue;
         if (targetPlugin.firstClass)
             firstClassDefs.push(targetPlugin.name);
         if (typeof plugin === "undefined" && typeof targetPlugin.path === "string") {
