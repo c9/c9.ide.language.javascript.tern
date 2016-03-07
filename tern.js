@@ -139,7 +139,7 @@ define(function(require, exports, module) {
                 if (err) return console.error(err);
                 worker.on("tern_read_plugins", function tern_read_plugins(e) {
                     var backupPluginStatus;
-                    worker.off(tern_read_plugins);
+                    worker.off("tern_read_plugins", tern_read_plugins);
                     backupPluginStatus = JSON.stringify(e.data);
                     callback(null, e.data);
                     
