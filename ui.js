@@ -28,8 +28,13 @@ define(function(require, exports, module) {
                 "Project": {
                     "Language Support" : {
                         position: 700,
-                        "Tern Completions" : {
+                        "JavaScript": {
                             position: 200,
+                            type: "label",
+                            caption: "JavaScript:",
+                        },
+                        "Tern Completions" : {
+                            position: 220,
                             type: "custom",
                             name: "ternCompletions",
                             node: new ui.bar({
