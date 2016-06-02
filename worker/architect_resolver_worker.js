@@ -2,7 +2,7 @@
 define(function(require, exports, module) {
 
 var plugin = require("./architect_resolver_tern_plugin");
-var worker = require("plugins/c9.ide.language/worker");
+var worker = require("plugins/c9.ide.language.core/worker");
 var util = require("plugins/c9.ide.language/worker_util");
 var completeUtil = require("plugins/c9.ide.language/complete_util");
 var baseLanguageHandler = require('plugins/c9.ide.language/base_handler');
