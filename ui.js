@@ -26,14 +26,9 @@ define(function(require, exports, module) {
             
             prefs.add({
                 "Project": {
-                    "Language Support" : {
+                    "Language Support": {
                         position: 700,
-                        "JavaScript": {
-                            position: 200,
-                            type: "label",
-                            caption: "JavaScript:",
-                        },
-                        "Tern Completions" : {
+                        "Tern Completions": {
                             position: 220,
                             type: "custom",
                             name: "ternCompletions",
