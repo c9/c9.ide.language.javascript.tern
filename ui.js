@@ -23,11 +23,10 @@ define(function(require, exports, module) {
             if (loaded) return;
             loaded = true;
             
-            
             prefs.add({
                 "Project": {
-                    "Language Support": {
-                        position: 700,
+                    "JavaScript Support": {
+                        position: 1100,
                         "Tern Completions": {
                             position: 220,
                             type: "custom",
@@ -60,7 +59,7 @@ define(function(require, exports, module) {
                 },
                 columns : [
                     {
-                        caption: "JavaScript Libraries Used",
+                        caption: "JavaScript Library Code Completion",
                         value: "name",
                         width: "100%",
                         type: "tree"
