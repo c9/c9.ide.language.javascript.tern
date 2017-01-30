@@ -202,13 +202,13 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
       
                 document.body.style.marginBottom = "33%";
                 
-                tabs.once("ready", function(){
+                tabs.once("ready", function() {
                     tabs.getPanes()[0].focus();
                     done();
                 });
             });
             
-            describe("architect_resolver", function(){
+            describe("architect_resolver", function() {
                 var jsTab;
                 var jsSession;
                 
@@ -238,7 +238,7 @@ require(["lib/architect/architect", "lib/chai/chai", "plugins/c9.ide.language/co
                             expect(jsSession).to.not.equal(null);
                             setTimeout(function() {
                                 complete.closeCompletionBox();
-                                jsTab.editor.ace.selection.setSelectionRange({ start: { row: 15, column: 17 }, end: { row: 15, column: 17 } });
+                                jsTab.editor.ace.selection.setSelectionRange({ start: { row: 15, column: 17 }, end: { row: 15, column: 17 }});
                                 done();
                             });
                         });

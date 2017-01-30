@@ -704,7 +704,7 @@ function dirname(path) {
  */
 function getSignature(property) {
     if (!property.type || !property.type.match(/^fn\(/))
-        return { parameters: [] };
+        return { parameters: []};
     var sig = property.type;
     var parameters = [{ name: "", type: "" }];
     var parameterIndex = 0;

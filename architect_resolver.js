@@ -52,12 +52,12 @@ define(function(require, exports, module) {
             language.registerLanguageHandler("plugins/c9.ide.language.javascript.tern/worker/architect_resolver_worker");
         }
         
-        plugin.on("load", function(){
+        plugin.on("load", function() {
             load();
         });
 
         plugin.freezePublicAPI({});
         
-        register(null, { "language.tern.architect_resolver" : plugin });
+        register(null, { "language.tern.architect_resolver": plugin });
     }
 });

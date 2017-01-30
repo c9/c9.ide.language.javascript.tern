@@ -130,7 +130,7 @@ define(function(require, exports, module) {
         function setTernServerOptions(ternServerOptions) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
-                worker.emit("tern_set_server_options", { data:ternServerOptions});
+                worker.emit("tern_set_server_options", { data: ternServerOptions });
             });
         }
         
@@ -163,7 +163,7 @@ define(function(require, exports, module) {
         function setTernRequestOptions(ternRequestOptions) {
             language.getWorker(function(err, worker) {
                 if (err) return console.error(err);
-                worker.emit("tern_set_request_options", { data:ternRequestOptions });
+                worker.emit("tern_set_request_options", { data: ternRequestOptions });
             });
 
         }

@@ -57,7 +57,7 @@ define(function(require, exports, module) {
                         return a.label.toLowerCase() > b.label.toLowerCase() ? 1 : -1;
                     });
                 },
-                columns : [
+                columns: [
                     {
                         caption: "JavaScript Library Code Completion",
                         value: "name",
@@ -90,14 +90,14 @@ define(function(require, exports, module) {
                             label: "Main",
                             description: "",
                             items: Object.keys(defs)
-                                .filter(function(d) { return !defs[d].hidden && !defs[d].experimental })
+                                .filter(function(d) { return !defs[d].hidden && !defs[d].experimental; })
                                 .map(toCheckbox)
                         }, 
                         {
                             label: "Experimental",
                             description: "",
                             items: Object.keys(defs)
-                                .filter(function(d) { return !defs[d].hidden && defs[d].experimental })
+                                .filter(function(d) { return !defs[d].hidden && defs[d].experimental; })
                                 .map(toCheckbox)
                         }
                     ]);

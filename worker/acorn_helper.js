@@ -6,7 +6,7 @@
     return define(["acorn/dist/acorn", "acorn/dist/acorn_loose", "require", "exports"], mod);
   mod(tern, tern);
 })(function(acorn, acornLoose, require, exports) {
-var File = function() {} // TODO? use require("tern/lib/tern").File
+var File = function() {}; // TODO? use require("tern/lib/tern").File
 var parse = acorn.parse;
 var parse_dammit = acornLoose.parse_dammit;
 
@@ -43,7 +43,7 @@ acornLoose.parse_dammit = function(input, options) {
     }
     if (!options.directSourceFile) {
         options.directSourceFile = new File();
-        options.directSourceFile
+        options.directSourceFile;
     }
     // console.log("recompute")
     lastOutputLoose = filterDefine(parse_dammit(input, options));
